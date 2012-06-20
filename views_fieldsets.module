@@ -28,38 +28,85 @@ function views_fieldsets_form_alter($form, $form_state, $form_id) {
 /**
  * Implements hook_form_FORM_ID_alter() for views_ui_rearrange_form().
  */
-function views_fieldsets_form_views_ui_rearrange_form_alter($form, $form_state, $form_id = 'views_ui_rearrange_form') {
+function views_fieldsets_form_views_ui_rearrange_form_alter(&$form, &$form_state, $form_id = 'views_ui_rearrange_form') {
+	if (!isset($form['fields']) || 'field' != end(explode('/', $form['#action']))) {
+		return;
+	}
+
 	foreach (element_children($form['fields']) as $field_name) {
-		$form['fields'][$field_name]['hierarchy'] = array(
-			'#type' => 'textfield',
-			'#value' => 'nah',
+		$form['fields'][$field_name]['field_name'] = array(
+			'#type' => 'hidden',
+			'#value' => $field_name,
+			'#attributes' => array('class' => array('field-name')),
 		);
+		$form['fields'][$field_name]['hierarchy'] = array(
+			'#type' => 'hidden',
+			'#default_value' => '',
+			'#attributes' => array('class' => array('hierarchy')),
+			'#size' => 5,
+		);
+		$form['fields'][$field_name]['depth'] = array(
+			'#type' => 'hidden',
+			'#default_value' => '',
+			'#attributes' => array('class' => array('depth')),
+			'#size' => 5,
+		);
+
+		$form['fields'][$field_name]['hierarchy']['#type'] = $form['fields'][$field_name]['depth']['#type'] = 'textfield';
 	}
 
 	// Add javascript settings that will be added via $.extend for tabledragging
-	$form['#js']['tableDrag']['arrange']['hierarchy'][0] = array(
+	/*$form['#js']['tableDrag']['arrange']['hierarchy'][0] = array(
 		'target' => 'hierarchy',
 		'source' => 'hierarchy',
 		'relationship' => 'parent',
 		'action' => 'match',
 		'hidden' => FALSE,
 		'limit' => 0,
-	);
+	);*/
 
+//	unset($form['#theme'], $form['#theme_wrappers'], $form['#submit']);
 	$form['#theme'] = 'views_fieldsets_rearrange_form';
 
-	print_r($form);
+	array_unshift($form['#validate'], 'views_fieldsets_rearrange_form_validate');
+	array_unshift($form['#submit'], 'views_fieldsets_rearrange_form_submit');
+
+//	print_r($form);
 }
 
+/**
+ * Validation handler for views_ui_rearrange_form().
+ */
+function views_fieldsets_rearrange_form_validate($form, &$form_state) {
+	$values = &$form_state['values'];
+	return form_set_error('', 'aaaaa');
+	print_r($values);
+	exit;
+}
+
+/**
+ * Submit handler for views_ui_rearrange_form().
+ */
+function views_fieldsets_rearrange_form_submit($form, &$form_state) {
+	$values = &$form_state['values'];
+	print_r($values);
+	exit;
+}
+
+/**
+ * Theme function for views_fieldsets_rearrange_form.
+ */
 function theme_views_fieldsets_rearrange_form($variables) {
 	$form = $variables['form'];
-	return drupal_render_children($form);
 
 	$rows = array();
 	foreach (element_children($form['fields']) as $id) {
 		if (isset($form['fields'][$id]['name'])) {
 			$row = array();
-			$row[] = drupal_render($form['fields'][$id]['name']) . drupal_render($form['fields'][$id]['hierarchy']);
+			$row[] = drupal_render($form['fields'][$id]['name']) .
+				drupal_render($form['fields'][$id]['hierarchy']) .
+				drupal_render($form['fields'][$id]['depth']) .
+				drupal_render($form['fields'][$id]['field_name']);
 			$form['fields'][$id]['weight']['#attributes']['class'] = array('weight');
 			$row[] = drupal_render($form['fields'][$id]['weight']);
 			$row[] = drupal_render($form['fields'][$id]['removed']) . l('<span>' . t('Remove') . '</span>', 'javascript:void()', array('attributes' => array('id' => 'views-remove-link-' . $id, 'class' => array('views-hidden', 'views-button-remove', 'views-remove-link'), 'alt' => t('Remove this item'), 'title' => t('Remove this item')), 'html' => TRUE));
@@ -83,15 +130,17 @@ function theme_views_fieldsets_rearrange_form($variables) {
 	$output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'arrange')));
 	$output .= '</div>';
 	$output .= drupal_render_children($form);
+
+	drupal_add_tabledrag('arrange', 'match', 'parent', 'hierarchy', 'hierarchy', 'field-name', FALSE);
+	drupal_add_tabledrag('arrange', 'depth', 'group', 'depth', NULL, NULL, FALSE);
 	drupal_add_tabledrag('arrange', 'order', 'sibling', 'weight');
-	drupal_add_tabledrag('arrange', 'match', 'parent', 'hierarchy');
 
 	return $output;
 }
 
 /**
  * Implements hook_form_FORM_ID_alter() for views_ui_edit_form().
- */
+ *
 function views_fieldsets_form_views_ui_edit_form_alter($form, $form_state, $form_id = 'views_ui_edit_form') {
 	drupal_add_js(drupal_get_path('module', 'views_fieldsets') . '/views_fieldsets.js');
 
