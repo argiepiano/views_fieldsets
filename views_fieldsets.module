@@ -109,7 +109,6 @@ function views_fieldsets_form_views_ui_rearrange_form_alter(&$form, &$form_state
 
 	// Add tabledrag related elements
 	foreach (element_children($form['fields']) as $field_name) {
-		$form['fields'][$field_name]['name']['#markup'] = str_repeat('-----', $fields[$field_name]->info->depth) . $form['fields'][$field_name]['name']['#markup'];
 		if (views_fieldsets_name_is_fieldset($field_name)) {
 			$form['fields'][$field_name]['name']['#markup'] = '<strong>' . $form['fields'][$field_name]['name']['#markup'] . '</strong>';
 		}
@@ -176,8 +175,11 @@ function theme_views_fieldsets_rearrange_form($variables) {
 	$rows = array();
 	foreach (element_children($form['fields']) as $id) {
 		if (isset($form['fields'][$id]['name'])) {
+			$indentation = isset($form['fields'][$id]['depth']) && $form['fields'][$id]['depth']['#default_value'] > 0 ? theme('indentation', array('size' => $form['fields'][$id]['depth']['#default_value'])) : '';
 			$row = array();
-			$row[] = drupal_render($form['fields'][$id]['name']) .
+			$row[] =
+				$indentation .
+				drupal_render($form['fields'][$id]['name']) .
 				drupal_render($form['fields'][$id]['hierarchy']) .
 				drupal_render($form['fields'][$id]['depth']) .
 				drupal_render($form['fields'][$id]['field_name']);
