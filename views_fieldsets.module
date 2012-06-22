@@ -55,33 +55,11 @@ function views_fieldsets_form_views_ui_rearrange_form_alter(&$form, &$form_state
 		$form['fields'][$field_name]['hierarchy']['#type'] = $form['fields'][$field_name]['depth']['#type'] = 'textfield';
 	}
 
-	// Add javascript settings that will be added via $.extend for tabledragging
-	/*$form['#js']['tableDrag']['arrange']['hierarchy'][0] = array(
-		'target' => 'hierarchy',
-		'source' => 'hierarchy',
-		'relationship' => 'parent',
-		'action' => 'match',
-		'hidden' => FALSE,
-		'limit' => 0,
-	);*/
-
-//	unset($form['#theme'], $form['#theme_wrappers'], $form['#submit']);
 	$form['#theme'] = 'views_fieldsets_rearrange_form';
 
-	array_unshift($form['#validate'], 'views_fieldsets_rearrange_form_validate');
-	array_unshift($form['#submit'], 'views_fieldsets_rearrange_form_submit');
+	array_unshift($form['buttons']['submit']['#submit'], 'views_fieldsets_rearrange_form_submit');
 
-//	print_r($form);
-}
-
-/**
- * Validation handler for views_ui_rearrange_form().
- */
-function views_fieldsets_rearrange_form_validate($form, &$form_state) {
-	$values = &$form_state['values'];
-	return form_set_error('', 'aaaaa');
-	print_r($values);
-	exit;
+  dpm($form_state['view']);
 }
 
 /**
@@ -89,8 +67,17 @@ function views_fieldsets_rearrange_form_validate($form, &$form_state) {
  */
 function views_fieldsets_rearrange_form_submit($form, &$form_state) {
 	$values = &$form_state['values'];
-	print_r($values);
-	exit;
+
+  $display = &$form_state['view']->display[$form_state['display_id']];
+
+  $fields = $display->handler->get_option('fields');
+
+  $fieldsets = array();
+  foreach ($fields as $field_name => $stuff) {
+    $fieldsets[$field_name] = (string) @$values[$field_name]['hierarchy'];
+  }
+
+  $display->handler->set_option('fieldsets', $fieldsets);
 }
 
 /**
