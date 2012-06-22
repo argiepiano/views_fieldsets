@@ -23,9 +23,6 @@ function views_fieldsets_theme() {
  */
 function views_fieldsets_form_alter($form, $form_state, $form_id) {
 	drupal_set_message($form_id);
-	if ('field_ui_field_overview_form' == $form_id) {
-		dpm($form);
-	}
 }
 
 /**
@@ -68,7 +65,7 @@ function views_fieldsets_hierarchy_info($fieldsets, $get_parent = '', $depth = 0
 					'fieldset_weight' => count($hierarchy),
 					'total_weight' => 0,
 					'depth' => $depth,
-					'parent' => $parent ?: NULL,
+					'parent' => $parent ?: '',
 				),
 			);
 			if (views_fieldsets_name_is_fieldset($field_name)) {
@@ -103,6 +100,8 @@ function views_fieldsets_form_views_ui_rearrange_form_alter(&$form, &$form_state
 	$view = $form_state['view'];
 	$display_handler = $view->display_handler;
 //dpm($display_handler);
+	$fields = $display_handler->get_option('fields');
+//dpm($fields);
 
 	$fieldsets = $display_handler->get_option('fieldsets');
 //dpm($fieldsets);
@@ -145,14 +144,18 @@ function views_fieldsets_form_views_ui_rearrange_form_alter(&$form, &$form_state
 	}
 
 	// Reorder (stupid tabledrag)
+	/** Not necessary anymore!
 	foreach ($fields as $field_name => $field) {
-		$form_element = $form['fields'][$field_name];
-		$form_element['weight']['#default_value'] = $fields[$field_name]->info->fieldset_weight;
-		unset($form['fields'][$field_name]);
-		$form['fields'][$field_name] = $form_element;
+		if (isset($form['fields'][$field_name])) {
+			$form_element = $form['fields'][$field_name];
+			$form_element['weight']['#default_value'] = $fields[$field_name]->info->fieldset_weight;
+			unset($form['fields'][$field_name]);
+			$form['fields'][$field_name] = $form_element;
+		}
 	}
-//dpm($form);
+	/**/
 
+//dpm($form);
 	$form['#theme'] = 'views_fieldsets_rearrange_form';
 
 	array_unshift($form['buttons']['submit']['#submit'], 'views_fieldsets_rearrange_form_submit');
@@ -189,11 +192,14 @@ function views_fieldsets_rearrange_form_submit($form, &$form_state) {
 	// Create simple hierarchy from new sort (sorted the Views way, with parents).
 	$hierarchy = array();
 	foreach ($fieldsets['fields'] as $field_name => $field) {
-		$hierarchy[$field_name] = $field->info->parent;
+		$hierarchy[$field_name] = $fields[$field_name]['views_fieldsets_parent'] = $field->info->parent;
 	}
+	$display->handler->set_option('fields', $fields);
 
 	// Save simple hierarchy (field => parent) **in the right order** into the view.
 	$display->handler->set_option('fieldsets', $hierarchy);
+//dpm($fields);
+//dpm($display->handler->view);
 }
 
 /**
