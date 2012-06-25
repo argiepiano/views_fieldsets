@@ -19,6 +19,69 @@ function views_fieldsets_theme() {
 }
 
 /**
+ * Implements ...
+ */
+function views_fieldsets_preprocess_views_view_fields(&$variables) {
+	$view = $variables['view'];
+	$fieldsets = $view->display_handler->options['fieldsets'];
+	if (array_filter($fieldsets)) {
+		$hierarchy = views_fieldsets_hierarchy_info($fieldsets);
+
+		$output = $open_fieldsets = array();
+		$last_field = $last_field_name = $last_fieldset = $last_fieldset_name = null;
+		foreach ( $hierarchy['fields'] as $field_name => $field ) {
+			if (isset($variables['fields'][$field_name])) {
+				$open_fieldset = end($open_fieldsets);
+				if ( $open_fieldset && $field->info->depth == $hierarchy['fields'][$open_fieldset]->info->depth ) {
+					// End fieldset
+					$var_field = clone $variables['fields'][$open_fieldset];
+					$var_field->content = '</fieldset>';
+
+					$output[$open_fieldset . '__end'] = $var_field;
+
+					array_pop($open_fieldsets);
+				}
+
+				if (views_fieldsets_name_is_fieldset($field_name)) {
+					// Start fieldset
+					$open_fieldsets[] = $field_name;
+					$last_fieldset_name = $field_name;
+					$last_fieldset = $field;
+
+					$var_field = $variables['fields'][$field_name];
+					$var_field->content = '<fieldset><legend>' . $var_field->label . '</legend>';
+					$var_field->label = $var_field->label_html = '';
+
+					$output[$field_name . '__start'] = $var_field;
+				}
+				else {
+					// Normal field
+					$output[$field_name] = $variables['fields'][$field_name];
+				}
+
+				$last_field = $field;
+			}
+		}
+
+		// End open fieldsets
+		while ( $open_fieldsets ) {
+			$open_fieldset = array_pop($open_fieldsets);
+			$var_field = clone $variables['fields'][$open_fieldset];
+			$var_field->content = '</fieldset>';
+			$output[$open_fieldset . '__end'] = $var_field;
+		}
+
+//dpm($output);
+		$variables['fields'] = $output;
+
+#static $ass;
+#!$ass && dpm($output);
+#$ass = 1;
+
+	}
+}
+
+/**
  * Implements hook_form_alter().
  */
 function views_fieldsets_form_alter($form, $form_state, $form_id) {
@@ -36,11 +99,8 @@ function views_fieldsets_form_views_ui_edit_form_alter($form, $form_state, $form
  * Implements hook_views_ui_display_tab_alter().
  */
 function views_fieldsets_views_ui_display_tab_alter(&$build, $view, $display_id) {
-#dpm($build);
-#dpm($view);
 	$fieldsets = $view->display_handler->options['fieldsets'];
 	$hierarchy = views_fieldsets_hierarchy_info($fieldsets);
-#dpm($hierarchy);
 
 	foreach (element_children($build['details']['columns']['first']['fields']['fields']) as $field_name) {
 		$field =& $build['details']['columns']['first']['fields']['fields'][$field_name];
@@ -49,7 +109,9 @@ function views_fieldsets_views_ui_display_tab_alter(&$build, $view, $display_id)
 			$field['#class'][] = 'views-fieldset';
 		}
 
-		$field['#class'][] = 'views-fieldset-depth-' . $hierarchy['fields'][$field_name]->info->depth;
+		if (isset($hierarchy['fields'][$field_name])) {
+			$field['#class'][] = 'views-fieldset-depth-' . $hierarchy['fields'][$field_name]->info->depth;
+		}
 
 		unset($field);
 	}
