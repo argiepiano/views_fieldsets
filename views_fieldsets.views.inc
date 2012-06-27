@@ -18,7 +18,7 @@ function views_fieldsets_views_data() {
     'title' => t('Fieldset'),
     'help' => t('Adds a fieldset to put fields and other fieldsets in.'),
     'field' => array(
-      'handler' => 'views_handler_field_custom',
+      'handler' => 'views_fieldsets_fieldset_field_handler',
     ),
   );
 
