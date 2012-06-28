@@ -20,6 +20,7 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
 
   function options_form(&$form, &$form_state) {
     $keep_form_elements = element_children($form);
+    $keep_form_elements[] = 'custom_label';
     $keep_form_elements[] = 'label';
 
     // Get the usual suspects.
@@ -32,12 +33,17 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
       }
     }
 
+	// Alter custom_label (always ON).
+    $element = &$form['custom_label'];
+	$element['#default_value'] = $element['#value'] = TRUE;
+	$element['#type'] = 'hidden';
+
     // Alter label to make it fit our needs.
-    $label = &$form['label'];
-    unset($label['#dependency']);
-    $label['#title'] = t('Fieldset title');
-    $label['#required'] = TRUE;
-    $label['#description'] = t('The back-end admin label and front-end fieldset title.');
+    $element = &$form['label'];
+    unset($element['#dependency']);
+    $element['#title'] = t('Fieldset title');
+    $element['#required'] = TRUE;
+    $element['#description'] = t('The back-end admin label and front-end fieldset title.');
 
     // @todo Add css_class etc here.
 //dpm($form);
