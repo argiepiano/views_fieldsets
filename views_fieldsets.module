@@ -44,27 +44,115 @@ function views_fieldsets_preprocess_views_view_fields(&$variables) {
  *
  * @see views_fieldsets_preprocess_views_view_fields().
  */
-function views_fieldsets_preprocess_views_view_fields__2(&$variables) {
+function views_fieldsets_preprocess_views_view_fields__2(&$vars) {
 static $debug = 1;
 
-	$view = $variables['view'];
-unset($variables['view']);
+	$view = $vars['view'];
+//unset($vars['view']);
 	$display_handler = $view->display_handler;
 	$fields = $display_handler->get_option('fields');
-$debug && dpm($view);
+#$debug && dpm($view);
 
 	$fieldsets = views_fieldsets_field_options_to_fieldsets_1d($fields);
 	if ($fieldsets && array_filter($fieldsets)) {
 		$hierarchy = views_fieldsets_hierarchy_info($display_handler, $fieldsets);
-$debug && dpm($variables);
-$debug && dpm($hierarchy['tree']);
-$debug && dpm($view->style_plugin->theme_functions());
+		$vars['hierarchy'] = $hierarchy;
+$debug && dpm($vars);
+#$debug && dpm($hierarchy['tree']);
+#$debug && dpm($view->style_plugin->theme_functions());
 
-		
+
+
+
+
+		$new_fields = array();
+		foreach ($hierarchy['tree'] as $field_name => $info_field) {
+//drupal_set_message($field_name);
+			$views_field = $vars['fields'][$field_name];
+
+			if (views_fieldsets_field_is_fieldset($field_name, $display_handler)) {
+				// Save fieldset field name for next recursion.
+				$vars['fieldset_field'] = $field_name;
+
+				// Render fieldset + children.
+				$content = views_fieldsets_render__simple($info_field->children, $vars);
+				$views_field->content = $content;
+				$views_field->label_html = $views_field->wrapper_prefix = $views_field->wrapper_suffix = '';
+				$new_fields[$field_name] = $views_field;
+			}
+			else {
+				// Render single field.
+				$new_fields[$field_name] = $views_field;
+			}
+		}
+
+		$vars['fields'] = $new_fields;
+
+
+
+
+
+#		$content = views_fieldsets_render__simple($hierarchy['tree'], $vars);
+#		$vars['content'] = $content;
+#		$vars['theme_hook_suggestion'] = 'oele';
 	}
 
 $debug = 0;
 }
+
+/**
+ * Helper to render fieldsets.
+ *
+ * @see views_fieldsets_preprocess_views_view_fields__2().
+ */
+function views_fieldsets_render__simple($fields, $vars) {
+	$display_handler = $vars['view']->display_handler;
+	$hierarchy = $vars['hierarchy'];
+
+//dpm(array_keys($fields));
+	$original_vars = $vars;
+	$output = '';
+
+	if (isset($original_vars['fieldset_field'])) {
+		$fieldset_field = $vars['fieldset_field'];
+		$info_field = $hierarchy['fields'][$fieldset_field];
+		$views_field = $vars['fields'][$fieldset_field];
+//dpm($views_field, $fieldset_field);
+
+		$output .= '<fieldset><legend>' . $views_field->label . '</legend>';
+	}
+
+	foreach ($fields as $field_name => $info_field) {
+//drupal_set_message($field_name);
+		$views_field = $vars['fields'][$field_name];
+
+		if (views_fieldsets_field_is_fieldset($field_name, $display_handler)) {
+			// Prep children & fieldset field options/settings.
+			$fields = !empty($info_field->children) ? $info_field->children : array();
+			$vars['fieldset_field'] = $field_name;
+
+			// Render fieldset + children.
+			$output .= views_fieldsets_render__simple($fields, $vars);
+		}
+		else {
+			// Render single field.
+			$output .= $views_field->wrapper_prefix . $views_field->label_html . $views_field->content . $views_field->wrapper_suffix . "\n";
+		}
+	}
+
+	if (isset($original_vars['fieldset_field'])) {
+		$fieldset_field = $vars['fieldset_field'];
+		$info_field = $hierarchy['fields'][$fieldset_field];
+		$views_field = $vars['fields'][$fieldset_field];
+
+		$output .= '</fieldset>';
+	}
+
+	$output .= "\n";
+
+	return $output;
+}
+
 
 /**
  * Implements template_preprocess_views_view_fields().
