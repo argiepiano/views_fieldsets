@@ -33,10 +33,10 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
       }
     }
 
-	// Alter custom_label (always ON).
+    // Alter custom_label (always ON).
     $element = &$form['custom_label'];
-	$element['#default_value'] = $element['#value'] = TRUE;
-	$element['#type'] = 'hidden';
+    $element['#default_value'] = $element['#value'] = TRUE;
+    $element['#type'] = 'hidden';
 
     // Alter label to make it fit our needs.
     $element = &$form['label'];
