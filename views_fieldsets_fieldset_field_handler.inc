@@ -13,7 +13,19 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
   function option_definition() {
     $options = parent::option_definition();
 
+    // Remove all but three.
+//    $options = array_intersect_key($options, array_flip(array('table', 'id', 'field')));
+//    unset($options['alter']);
+
+    // Add the hierarchical fieldset structure storage.
     $options['children'] = array('default' => array());
+
+    // Add (cosmetic) user options.
+    $options['fieldset']['contains'] = array();
+    $options['fieldset']['contains']['type'] = array('default' => 'fieldset');
+    $options['fieldset']['contains']['classes'] = array('default' => '');
+    $options['fieldset']['contains']['collapsible'] = array('default' => 0);
+    $options['fieldset']['contains']['collapsed'] = array('default' => 0);
 
     return $options;
   }
@@ -43,10 +55,42 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
     unset($element['#dependency']);
     $element['#title'] = t('Fieldset title');
     $element['#required'] = TRUE;
-    $element['#description'] = t('The back-end admin label and front-end fieldset title.');
+    $element['#description'] = t('The back-end admin label and front-end fieldset legend.');
 
-    // @todo Add css_class etc here.
-//dpm($form);
+    // Add 'fieldset' tree.
+    $form['fieldset'] = array(
+      '#tree' => TRUE,
+    );
+
+    $fieldset_types = array(
+      'fieldset' => '<fieldset>',
+      'div' => '<div>',
+    );
+    $form['fieldset']['type'] = array(
+      '#type' => 'select',
+      '#title' => t('Display type'),
+      '#options' => $fieldset_types,
+      '#default_value' => $this->options['fieldset']['type'],
+      '#description' => t('A <code>&lt;fieldset&gt;</code> will always show its title as <code>&lt;legend&gt;</code>. A <code>&lt;div&gt;</code> will never show the title.'),
+    );
+
+    $form['fieldset']['classes'] = array(
+      '#type' => 'textfield',
+      '#title' => t('CSS classes'),
+      '#default_value' => $this->options['fieldset']['classes'],
+    );
+
+    $form['fieldset']['collapsible'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Collapsible'),
+      '#default_value' => $this->options['fieldset']['collapsible'],
+    );
+
+    $form['fieldset']['collapsed'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Collapsed'),
+      '#default_value' => $this->options['fieldset']['collapsed'],
+    );
   }
 
   function render($values) {

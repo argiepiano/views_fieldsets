@@ -45,37 +45,30 @@ function views_fieldsets_preprocess_views_view_fields(&$variables) {
  * @see views_fieldsets_preprocess_views_view_fields().
  */
 function views_fieldsets_preprocess_views_view_fields__2(&$vars) {
-static $debug = 1;
-
   $view = $vars['view'];
-//unset($vars['view']);
   $display_handler = $view->display_handler;
   $fields = $display_handler->get_option('fields');
-#$debug && dpm($view);
 
   $fieldsets = views_fieldsets_field_options_to_fieldsets_1d($fields);
   if ($fieldsets && array_filter($fieldsets)) {
+    // Add collapse.js for actual fieldsets.
+    drupal_add_js('misc/collapse.js');
+    drupal_add_js('misc/form.js');
+
     $hierarchy = views_fieldsets_hierarchy_info($display_handler, $fieldsets);
     $vars['hierarchy'] = $hierarchy;
-$debug && dpm($vars);
-#$debug && dpm($hierarchy['tree']);
-#$debug && dpm($view->style_plugin->theme_functions());
-
-
-
-
 
     $new_fields = array();
     foreach ($hierarchy['tree'] as $field_name => $info_field) {
-//drupal_set_message($field_name);
       $views_field = $vars['fields'][$field_name];
 
       if (views_fieldsets_field_is_fieldset($field_name, $display_handler)) {
         // Save fieldset field name for next recursion.
-        $vars['fieldset_field'] = $field_name;
+        $sub_vars = $vars;
+        $sub_vars['fieldset_field'] = $field_name;
 
         // Render fieldset + children.
-        $content = views_fieldsets_render__simple($info_field->children, $vars);
+        $content = views_fieldsets_render__simple($info_field->children, $sub_vars);
         $views_field->content = $content;
         $views_field->label_html = $views_field->wrapper_prefix = $views_field->wrapper_suffix = '';
         $new_fields[$field_name] = $views_field;
@@ -87,17 +80,7 @@ $debug && dpm($vars);
     }
 
     $vars['fields'] = $new_fields;
-
-
-
-
-
-#    $content = views_fieldsets_render__simple($hierarchy['tree'], $vars);
-#    $vars['content'] = $content;
-#    $vars['theme_hook_suggestion'] = 'oele';
   }
-
-$debug = 0;
 }
 
 /**
@@ -109,15 +92,35 @@ function views_fieldsets_render__simple($fields, $vars) {
   $display_handler = $vars['view']->display_handler;
   $hierarchy = $vars['hierarchy'];
 
-  $original_vars = $vars;
+  $has_js = !empty($_COOKIE['has_js']);
+
   $output = '';
 
-  if (isset($original_vars['fieldset_field'])) {
+  if (isset($vars['fieldset_field'])) {
     $fieldset_field = $vars['fieldset_field'];
     $info_field = $hierarchy['fields'][$fieldset_field];
     $views_field = $vars['fields'][$fieldset_field];
+    $views_field_options = $views_field->handler->options['fieldset'];
 
-    $output .= '<fieldset><legend>' . $views_field->label . '</legend>';
+    $classes_array = array_filter(explode(' ', $views_field_options['classes']));
+    $classes_array[] = drupal_strtolower(drupal_clean_css_identifier($views_field->label));
+    $classes_array[] = 'views-fieldset';
+    if (!empty($views_field_options['collapsible'])) {
+      $classes_array[] = 'collapsible';
+    }
+    if (!empty($views_field_options['collapsed']) && $has_js) {
+      $classes_array[] = 'collapsed';
+    }
+
+    $html_element = $views_field_options['type'];
+    $classes = check_plain(implode(' ', $classes_array));
+
+    $output .= '<' . $html_element . ' class="' . $classes . '">';
+
+    if ('fieldset' == $html_element) {
+      $output .= '<legend><span class="fieldset-legend">' . $views_field->label . '</span></legend>';
+      $output .= '<div class="fieldset-wrapper">';
+    }
   }
 
   foreach ($fields as $field_name => $info_field) {
@@ -127,10 +130,11 @@ function views_fieldsets_render__simple($fields, $vars) {
       if (views_fieldsets_field_is_fieldset($field_name, $display_handler)) {
         // Prep children & fieldset field options/settings.
         $fields = !empty($info_field->children) ? $info_field->children : array();
-        $vars['fieldset_field'] = $field_name;
+        $sub_vars = $vars;
+        $sub_vars['fieldset_field'] = $field_name;
 
         // Render fieldset + children.
-        $output .= views_fieldsets_render__simple($fields, $vars);
+        $output .= views_fieldsets_render__simple($fields, $sub_vars);
       }
       else {
         // Render single field.
@@ -139,12 +143,19 @@ function views_fieldsets_render__simple($fields, $vars) {
     }
   }
 
-  if (isset($original_vars['fieldset_field'])) {
+  if (isset($vars['fieldset_field'])) {
     $fieldset_field = $vars['fieldset_field'];
     $info_field = $hierarchy['fields'][$fieldset_field];
     $views_field = $vars['fields'][$fieldset_field];
 
-    $output .= '</fieldset>';
+    $html_element = $views_field->handler->options['fieldset']['type'];
+
+    if ('fieldset' == $html_element) {
+      // Close .fieldset-wrapper
+      $output .= '</div>';
+    }
+
+    $output .= '</' . $html_element . '>';
   }
 
   $output .= "\n";
@@ -229,7 +240,7 @@ function views_fieldsets_form_views_ui_edit_form_alter($form, $form_state, $form
  */
 function views_fieldsets_field_options_to_fieldsets_1d($fields) {
   // Create empty 1D array with `field` => `parent`.
-  $fieldsets = array_combine(array_keys($fields), array_fill(0, count($fields), ''));
+  $fieldsets = $fields ? array_combine(array_keys($fields), array_fill(0, count($fields), '')) : array();
 
   // Fill `parent` values by iterating through all fields (only the Views Fieldset fields matter).
   foreach ($fields as $field_name => $field) {
