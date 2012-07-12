@@ -127,7 +127,8 @@ function views_fieldsets_render__simple($fields, $vars) {
   }
 
   $vars['fieldset_fields'] = $content;
-  $output = theme('views_fieldsets_fieldset', $vars);
+  $theme_hook_suggestions = views_theme_functions('views_fieldsets_fieldset', $vars['view'], $display_handler->display);
+  $output = theme($theme_hook_suggestions, $vars);
 
   $output .= "\n";
 
