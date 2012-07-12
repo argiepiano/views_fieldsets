@@ -20,6 +20,10 @@ function views_fieldsets_theme() {
     'views_fieldsets_rearrange_form' => array(
       'render element' => 'form',
     ),
+    'views_fieldsets_fieldset' => array(
+      'variables' => array('fieldset' => '', 'content' => ''),
+      'template' => 'views-fieldsets-fieldset',
+    ),
   );
 }
 
@@ -60,22 +64,24 @@ function views_fieldsets_preprocess_views_view_fields__2(&$vars) {
 
     $new_fields = array();
     foreach ($hierarchy['tree'] as $field_name => $info_field) {
-      $views_field = $vars['fields'][$field_name];
+      if (isset($vars['fields'][$field_name])) {
+        $views_field = $vars['fields'][$field_name];
 
-      if (views_fieldsets_field_is_fieldset($field_name, $display_handler)) {
-        // Save fieldset field name for next recursion.
-        $sub_vars = $vars;
-        $sub_vars['fieldset_field'] = $field_name;
+        if (views_fieldsets_field_is_fieldset($field_name, $display_handler)) {
+          // Save fieldset field name for next recursion.
+          $sub_vars = $vars;
+          $sub_vars['fieldset_field'] = $field_name;
 
-        // Render fieldset + children.
-        $content = views_fieldsets_render__simple($info_field->children, $sub_vars);
-        $views_field->content = $content;
-        $views_field->label_html = $views_field->wrapper_prefix = $views_field->wrapper_suffix = '';
-        $new_fields[$field_name] = $views_field;
-      }
-      else {
-        // Render single field.
-        $new_fields[$field_name] = $views_field;
+          // Render fieldset + children.
+          $content = views_fieldsets_render__simple($info_field->children, $sub_vars);
+          $views_field->content = $content;
+          $views_field->label_html = $views_field->wrapper_prefix = $views_field->wrapper_suffix = '';
+          $new_fields[$field_name] = $views_field;
+        }
+        else {
+          // Render single field.
+          $new_fields[$field_name] = $views_field;
+        }
       }
     }
 
@@ -94,34 +100,7 @@ function views_fieldsets_render__simple($fields, $vars) {
 
   $has_js = !empty($_COOKIE['has_js']);
 
-  $output = '';
-
-  if (isset($vars['fieldset_field'])) {
-    $fieldset_field = $vars['fieldset_field'];
-    $info_field = $hierarchy['fields'][$fieldset_field];
-    $views_field = $vars['fields'][$fieldset_field];
-    $views_field_options = $views_field->handler->options['fieldset'];
-
-    $classes_array = array_filter(explode(' ', $views_field_options['classes']));
-    $classes_array[] = drupal_strtolower(drupal_clean_css_identifier($views_field->label));
-    $classes_array[] = 'views-fieldset';
-    if (!empty($views_field_options['collapsible'])) {
-      $classes_array[] = 'collapsible';
-    }
-    if (!empty($views_field_options['collapsed']) && $has_js) {
-      $classes_array[] = 'collapsed';
-    }
-
-    $html_element = $views_field_options['type'];
-    $classes = check_plain(implode(' ', $classes_array));
-
-    $output .= '<' . $html_element . ' class="' . $classes . '">';
-
-    if ('fieldset' == $html_element) {
-      $output .= '<legend><span class="fieldset-legend">' . $views_field->label . '</span></legend>';
-      $output .= '<div class="fieldset-wrapper">';
-    }
-  }
+  $content = array();
 
   foreach ($fields as $field_name => $info_field) {
     if (isset($vars['fields'][$field_name])) {
@@ -129,38 +108,61 @@ function views_fieldsets_render__simple($fields, $vars) {
 
       if (views_fieldsets_field_is_fieldset($field_name, $display_handler)) {
         // Prep children & fieldset field options/settings.
-        $fields = !empty($info_field->children) ? $info_field->children : array();
+        $sub_fields = !empty($info_field->children) ? $info_field->children : array();
         $sub_vars = $vars;
         $sub_vars['fieldset_field'] = $field_name;
 
         // Render fieldset + children.
-        $output .= views_fieldsets_render__simple($fields, $sub_vars);
+        $content[] = views_fieldsets_render__simple($sub_fields, $sub_vars);
       }
       else {
         // Render single field.
-        $output .= $views_field->wrapper_prefix . $views_field->label_html . $views_field->content . $views_field->wrapper_suffix . "\n";
+        $content[] = $views_field->wrapper_prefix . $views_field->label_html . $views_field->content . $views_field->wrapper_suffix . "\n";
       }
     }
   }
 
-  if (isset($vars['fieldset_field'])) {
-    $fieldset_field = $vars['fieldset_field'];
-    $info_field = $hierarchy['fields'][$fieldset_field];
-    $views_field = $vars['fields'][$fieldset_field];
-
-    $html_element = $views_field->handler->options['fieldset']['type'];
-
-    if ('fieldset' == $html_element) {
-      // Close .fieldset-wrapper
-      $output .= '</div>';
-    }
-
-    $output .= '</' . $html_element . '>';
-  }
+  $vars['content'] = implode($content);
+  $output = theme('views_fieldsets_fieldset', $vars);
 
   $output .= "\n";
 
   return $output;
+}
+
+
+/**
+ * Default theme function for views_fieldsets_fieldset.
+ */
+function template_preprocess_views_fieldsets_fieldset(&$vars) {
+  $hierarchy = $vars['hierarchy'];
+  $fieldset_field = $vars['fieldset_field'];
+  $info_field = $hierarchy['fields'][$fieldset_field];
+  $views_field = $vars['fields'][$fieldset_field];
+  $views_field_options = $views_field->handler->options['fieldset'];
+
+  // HTML tag.
+  $vars['tag'] = $views_field_options['type'];
+
+  // CSS classes.
+  $classes_array = array_filter(explode(' ', $views_field_options['classes']));
+  $classes_array[] = drupal_strtolower(drupal_clean_css_identifier($views_field->label));
+  $classes_array[] = 'views-fieldset';
+  if (!empty($views_field_options['collapsible'])) {
+    $classes_array[] = 'collapsible';
+  }
+  if (!empty($views_field_options['collapsed']) && $has_js) {
+    $classes_array[] = 'collapsed';
+  }
+  $vars['classes_array'] = $classes_array;
+
+  // Fieldset legend.
+  $vars['legend'] = $views_field->label;
+
+  // Attributes?
+  $vars['attributes_array'] = array(
+    'data-module' => 'views_fieldsets',
+  );
 }
 
 
