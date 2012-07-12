@@ -143,27 +143,32 @@ function template_preprocess_views_fieldsets_fieldset(&$vars) {
   $fieldset_field = $vars['fieldset_field'];
   $info_field = $hierarchy['fields'][$fieldset_field];
   $views_field = $vars['fields'][$fieldset_field];
-  $views_field_options = $views_field->handler->options['fieldset'];
+  $views_field_options = $views_field->handler->options;
 
   $has_js = !empty($_COOKIE['has_js']);
 
   // HTML tag.
-  $vars['tag'] = $views_field_options['type'];
+  $vars['tag'] = $views_field_options['fieldset']['type'];
 
   // CSS classes.
-  $classes_array = array_filter(explode(' ', $views_field_options['classes']));
+  $classes_array = array_filter(explode(' ', $views_field_options['fieldset']['classes']));
   $classes_array[] = drupal_strtolower(drupal_clean_css_identifier($views_field->label));
   $classes_array[] = 'views-fieldset';
-  if (!empty($views_field_options['collapsible'])) {
+  if (!empty($views_field_options['fieldset']['collapsible'])) {
     $classes_array[] = 'collapsible';
   }
-  if (!empty($views_field_options['collapsed']) && $has_js) {
+  if (!empty($views_field_options['fieldset']['collapsed']) && $has_js) {
     $classes_array[] = 'collapsed';
   }
   $vars['classes_array'] = $classes_array;
 
   // Fieldset legend.
-  $vars['legend'] = $views_field->label;
+  if (!empty($views_field_options['alter']['alter_text']) && !empty($views_field_options['alter']['text'])) {
+    $vars['legend'] = $views_field->content;
+  }
+  else {
+    $vars['legend'] = $views_field->label;
+  }
 
   // Attributes?
   $vars['attributes_array'] = array(

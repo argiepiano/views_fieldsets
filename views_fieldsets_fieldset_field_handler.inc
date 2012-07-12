@@ -6,16 +6,15 @@
  */
 
 class views_fieldsets_fieldset_field_handler extends views_handler_field {
+
   function query() {
-    // do nothing -- to override the parent query.
+    // Do nothing -- to override the parent query.
   }
 
   function option_definition() {
     $options = parent::option_definition();
 
-    // Remove all but three.
-//    $options = array_intersect_key($options, array_flip(array('table', 'id', 'field')));
-//    unset($options['alter']);
+    $options['element_default_classes']['default'] = FALSE;
 
     // Add the hierarchical fieldset structure storage.
     $options['children'] = array('default' => array());
@@ -31,14 +30,21 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
   }
 
   function options_form(&$form, &$form_state) {
+    // These options are required by Views.
     $keep_form_elements = element_children($form);
+
+    // These options are useful for a fieldset.
     $keep_form_elements[] = 'custom_label';
     $keep_form_elements[] = 'label';
+    $keep_form_elements[] = 'alter';
 
-    // Get the usual suspects.
+    // These options are useful 'alter' options. Most aren't.
+    $keep_rewrite_elements = array('alter_text', 'text', 'help', 'trim_whitespace', 'nl2br');
+
+    // Get the plentiful usual suspects.
     parent::options_form($form, $form_state);
 
-    // Remove all of them, except `label`.
+    // Remove options that aren't relevant.
     foreach (element_children($form) as $name) {
       if (!in_array($name, $keep_form_elements)) {
         unset($form[$name]);
@@ -55,9 +61,20 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
     unset($element['#dependency']);
     $element['#title'] = t('Fieldset title');
     $element['#required'] = TRUE;
-    $element['#description'] = t('The back-end admin label and front-end fieldset legend.');
+    $element['#description'] = t('The back-end admin label and default front-end fieldset legend. You can override the fieldset legend by rewriting below.');
 
-    // Add 'fieldset' tree.
+    // Open 'alter' fieldset.
+    $form['alter']['#collapsed'] = $form['alter']['#collapsible'] = FALSE;
+    $form['alter']['#description'] = t('This will alter the fieldset <code>&lt;legend&gt;</code>. Default would be the above <em>Fieldset title</em>.');
+
+    // Hide most 'alter' stuff.
+    foreach (element_children($form['alter']) as $name) {
+      if (!in_array($name, $keep_rewrite_elements)) {
+        $form['alter'][$name]['#access'] = FALSE;
+      }
+    }
+
+    // Add 'fieldset' tree with the usual fieldset stuff.
     $form['fieldset'] = array(
       '#tree' => TRUE,
     );
@@ -93,9 +110,12 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
     );
   }
 
+  /**
+   * This is a dummy that has to return a truthy value. Otherwise the No Results Behavior will kick in.
+   */
   function render($values) {
     if (isset($this->options['children'])) {
-      return 'I SHOULD CONTAIN: ' . implode(', ', $this->options['children']);
+      return '[' . implode(', ', $this->options['children']) . ']';
     }
   }
 
