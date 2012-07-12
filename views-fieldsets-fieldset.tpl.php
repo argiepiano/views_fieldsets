@@ -6,7 +6,9 @@
     <div class="fieldset-wrapper">
   <?php endif; ?>
 
-  <?php print $content; ?>
+  <?php foreach ($fieldset_fields as $name => $field): dpm(array_keys((array)$field)); ?>
+	<?php print $field->wrapper_prefix . $field->label_html . $field->content . $field->wrapper_suffix; ?>
+  <?php endforeach; ?>
 
   <?php if ('fieldset' == $tag): ?>
     </div>

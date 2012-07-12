@@ -111,23 +111,28 @@ function views_fieldsets_render__simple($fields, $vars) {
         $sub_vars['fieldset_field'] = $field_name;
 
         // Render fieldset + children.
-        $content[] = views_fieldsets_render__simple($sub_fields, $sub_vars);
+        $views_field->is_fieldset = TRUE;
+        $views_field->wrapper_prefix = '';
+        $views_field->label_html = '';
+        $views_field->content = views_fieldsets_render__simple($sub_fields, $sub_vars);
+        $views_field->wrapper_suffix = '';
       }
       else {
         // Render single field.
-        $content[] = $views_field->wrapper_prefix . $views_field->label_html . $views_field->content . $views_field->wrapper_suffix . "\n";
+        $views_field->is_fieldset = FALSE;
       }
+
+      $content[$field_name] = $views_field;
     }
   }
 
-  $vars['content'] = implode($content);
+  $vars['fieldset_fields'] = $content;
   $output = theme('views_fieldsets_fieldset', $vars);
 
   $output .= "\n";
 
   return $output;
 }
-
 
 /**
  * Default theme function for views_fieldsets_fieldset.
@@ -163,71 +168,6 @@ function template_preprocess_views_fieldsets_fieldset(&$vars) {
   $vars['attributes_array'] = array(
     'data-module' => 'views_fieldsets',
   );
-}
-
-
-/**
- * Implements template_preprocess_views_view_fields().
- *
- * @see views_fieldsets_preprocess_views_view_fields().
- *
- * THIS FUNCTION IS EVIL
- */
-function views_fieldsets_preprocess_views_view_fields__1(&$variables) {
-  $view = $variables['view'];
-  $display_handler = $view->display_handler;
-  $fields = $display_handler->get_option('fields');
-
-  $fieldsets = views_fieldsets_field_options_to_fieldsets_1d($fields);
-  if ($fieldsets && array_filter($fieldsets)) {
-    $hierarchy = views_fieldsets_hierarchy_info($display_handler, $fieldsets);
-
-    $output = $open_fieldsets = array();
-    $last_field = $last_field_name = $last_fieldset = $last_fieldset_name = NULL;
-    foreach ( $hierarchy['fields'] as $field_name => $field ) {
-      if (isset($variables['fields'][$field_name])) {
-        $open_fieldset = end($open_fieldsets);
-        if ( $open_fieldset && $field->info->depth == $hierarchy['fields'][$open_fieldset]->info->depth ) {
-          // End fieldset
-          $var_field = clone $variables['fields'][$open_fieldset];
-          $var_field->content = '</fieldset>';
-
-          $output[$open_fieldset . '__end'] = $var_field;
-
-          array_pop($open_fieldsets);
-        }
-
-        if (views_fieldsets_field_is_fieldset($field_name, $display_handler)) {
-          // Start fieldset
-          $open_fieldsets[] = $field_name;
-          $last_fieldset_name = $field_name;
-          $last_fieldset = $field;
-
-          $var_field = $variables['fields'][$field_name];
-          $var_field->content = '<fieldset><legend>' . $var_field->label . '</legend>';
-          $var_field->label = $var_field->label_html = '';
-
-          $output[$field_name . '__start'] = $var_field;
-        }
-        else {
-          // Normal field
-          $output[$field_name] = $variables['fields'][$field_name];
-        }
-
-        $last_field = $field;
-      }
-    }
-
-    // End open fieldsets
-    while ( $open_fieldsets ) {
-      $open_fieldset = array_pop($open_fieldsets);
-      $var_field = clone $variables['fields'][$open_fieldset];
-      $var_field->content = '</fieldset>';
-      $output[$open_fieldset . '__end'] = $var_field;
-    }
-
-    $variables['fields'] = $output;
-  }
 }
 
 /**
