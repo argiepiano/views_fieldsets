@@ -6,7 +6,7 @@
     <div class="fieldset-wrapper">
   <?php endif; ?>
 
-  <?php foreach ($fieldset_fields as $name => $field): dpm(array_keys((array)$field)); ?>
+  <?php foreach ($fieldset_fields as $name => $field): ?>
 	<?php print $field->wrapper_prefix . $field->label_html . $field->content . $field->wrapper_suffix; ?>
   <?php endforeach; ?>
 
