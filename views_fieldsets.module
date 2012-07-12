@@ -98,8 +98,6 @@ function views_fieldsets_render__simple($fields, $vars) {
   $display_handler = $vars['view']->display_handler;
   $hierarchy = $vars['hierarchy'];
 
-  $has_js = !empty($_COOKIE['has_js']);
-
   $content = array();
 
   foreach ($fields as $field_name => $info_field) {
@@ -140,6 +138,8 @@ function template_preprocess_views_fieldsets_fieldset(&$vars) {
   $info_field = $hierarchy['fields'][$fieldset_field];
   $views_field = $vars['fields'][$fieldset_field];
   $views_field_options = $views_field->handler->options['fieldset'];
+
+  $has_js = !empty($_COOKIE['has_js']);
 
   // HTML tag.
   $vars['tag'] = $views_field_options['type'];
