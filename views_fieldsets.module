@@ -282,7 +282,7 @@ function views_fieldsets_hierarchy_info($display_handler, $fieldsets, $get_paren
           'fieldset_weight' => count($hierarchy),
           'total_weight' => 0,
           'depth' => $depth,
-          'parent' => $parent ?: '',
+          'parent' => $parent ? $parent : '',
         ),
       );
       if (views_fieldsets_field_is_fieldset($field_name, $display_handler)) {
