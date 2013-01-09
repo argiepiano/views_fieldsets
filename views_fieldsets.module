@@ -96,6 +96,8 @@ function views_fieldsets_preprocess_views_view_fields__2(&$vars) {
  */
 function views_fieldsets_render__simple($fields, $vars) {
   $display_handler = $vars['view']->display_handler;
+  $views_field = $vars['view']->field[$vars['fieldset_field']];
+  $hide_empty = !empty($views_field->options['hide_empty']);
   $hierarchy = $vars['hierarchy'];
 
   $content = array();
@@ -126,11 +128,15 @@ function views_fieldsets_render__simple($fields, $vars) {
     }
   }
 
-  $vars['fieldset_fields'] = $content;
-  $theme_hook_suggestions = views_theme_functions('views_fieldsets_fieldset', $vars['view'], $display_handler->display);
-  $output = theme($theme_hook_suggestions, $vars);
-
-  $output .= "\n";
+  if ($content || !$hide_empty) {
+    $vars['fieldset_fields'] = $content;
+    $theme_hook_suggestions = views_theme_functions('views_fieldsets_fieldset', $vars['view'], $display_handler->display);
+    $output = theme($theme_hook_suggestions, $vars);
+    $output .= "\n";
+  }
+  else {
+    $output = '';
+  }
 
   return $output;
 }

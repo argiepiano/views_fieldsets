@@ -47,7 +47,7 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
     // Remove options that aren't relevant.
     foreach (element_children($form) as $name) {
       if (!in_array($name, $keep_form_elements)) {
-        unset($form[$name]);
+        $form[$name]['#access'] = FALSE;
       }
     }
 
@@ -73,6 +73,10 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
         $form['alter'][$name]['#access'] = FALSE;
       }
     }
+
+    // Don't hide 'hide_empty', because it's useful for empty fieldsets (due to empty fields).
+    unset($form['hide_empty']['#access'], $form['hide_empty']['#fieldset']);
+    $form['hide_empty']['#weight'] = 200;
 
     // Add 'fieldset' tree with the usual fieldset stuff.
     $form['fieldset'] = array(
