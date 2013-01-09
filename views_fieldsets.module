@@ -151,8 +151,6 @@ function template_preprocess_views_fieldsets_fieldset(&$vars) {
   $views_field = $vars['fields'][$fieldset_field];
   $views_field_options = $views_field->handler->options;
 
-  $has_js = !empty($_COOKIE['has_js']);
-
   // HTML tag.
   $vars['tag'] = $views_field_options['fieldset']['type'];
 
@@ -163,7 +161,7 @@ function template_preprocess_views_fieldsets_fieldset(&$vars) {
   if (!empty($views_field_options['fieldset']['collapsible'])) {
     $classes_array[] = 'collapsible';
   }
-  if (!empty($views_field_options['fieldset']['collapsed']) && $has_js) {
+  if (!empty($views_field_options['fieldset']['collapsed'])) {
     $classes_array[] = 'collapsed';
   }
   $vars['classes_array'] = $classes_array;
