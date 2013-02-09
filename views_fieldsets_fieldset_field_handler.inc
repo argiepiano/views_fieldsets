@@ -23,6 +23,7 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
     $options['fieldset']['contains'] = array();
     $options['fieldset']['contains']['type'] = array('default' => 'fieldset');
     $options['fieldset']['contains']['classes'] = array('default' => '');
+    $options['fieldset']['contains']['id'] = array('default' => '');
     $options['fieldset']['contains']['collapsible'] = array('default' => 0);
     $options['fieldset']['contains']['collapsed'] = array('default' => 0);
 
@@ -97,8 +98,16 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
 
     $form['fieldset']['classes'] = array(
       '#type' => 'textfield',
-      '#title' => t('CSS classes'),
+      '#title' => t('HTML classes'),
       '#default_value' => $this->options['fieldset']['classes'],
+	  '#description' => t('The usual Views row tokens are available.'),
+    );
+
+    $form['fieldset']['id'] = array(
+      '#type' => 'textfield',
+      '#title' => t('HTML ID'),
+      '#default_value' => $this->options['fieldset']['id'],
+	  '#description' => t('The usual Views row tokens are available.') . ' ' . t('You want to make sure this ID is very unique by using tokens.'),
     );
 
     $form['fieldset']['collapsible'] = array(

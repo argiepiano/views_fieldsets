@@ -145,6 +145,7 @@ function views_fieldsets_render__simple($fields, $vars) {
  * Default theme function for views_fieldsets_fieldset.
  */
 function template_preprocess_views_fieldsets_fieldset(&$vars) {
+  $view = $vars['view'];
   $hierarchy = $vars['hierarchy'];
   $fieldset_field = $vars['fieldset_field'];
   $info_field = $hierarchy['fields'][$fieldset_field];
@@ -155,7 +156,8 @@ function template_preprocess_views_fieldsets_fieldset(&$vars) {
   $vars['tag'] = $views_field_options['fieldset']['type'];
 
   // CSS classes.
-  $classes_array = array_filter(explode(' ', $views_field_options['fieldset']['classes']));
+  $classes = $views_field->handler->tokenize_value($views_field_options['fieldset']['classes'], $view->row_index);
+  $classes_array = array_filter(explode(' ', $classes));
   $classes_array[] = drupal_strtolower(drupal_clean_css_identifier($views_field->label));
   $classes_array[] = 'views-fieldset';
   if (!empty($views_field_options['fieldset']['collapsible'])) {
@@ -178,6 +180,11 @@ function template_preprocess_views_fieldsets_fieldset(&$vars) {
   $vars['attributes_array'] = array(
     'data-module' => 'views_fieldsets',
   );
+  if (!empty($views_field_options['fieldset']['id'])) {
+    $id = $views_field_options['fieldset']['id'];
+    $id = $views_field->handler->tokenize_value($id, $view->row_index);
+    $vars['attributes_array']['id'] = drupal_html_id($id);
+  }
 }
 
 /**
