@@ -321,8 +321,9 @@ function views_fieldsets_hierarchy_info($display_handler, $fieldsets, $get_paren
  * Implements hook_form_FORM_ID_alter() for views_ui_rearrange_form().
  */
 function views_fieldsets_form_views_ui_rearrange_form_alter(&$form, &$form_state, $form_id = 'views_ui_rearrange_form') {
-  if (!isset($form['fields']) || 'field' != end(explode('/', $form['#action']))) {
-    return;
+  $actions = array_filter(explode('/', $form['#action']));
+  if (!isset($form['fields']) || 'field' != end($actions)) {
+     return;
   }
 
   $view = $form_state['view'];
