@@ -158,7 +158,9 @@ function template_preprocess_views_fieldsets_fieldset(&$vars) {
   // CSS classes.
   $classes = $views_field->handler->tokenize_value($views_field_options['fieldset']['classes'], $view->row_index);
   $classes_array = array_filter(explode(' ', $classes));
-  $classes_array[] = drupal_strtolower(drupal_clean_css_identifier($views_field->label));
+  if (!$classes_array) {
+    $classes_array[] = drupal_strtolower(drupal_clean_css_identifier($views_field->label));
+  }
   $classes_array[] = 'views-fieldset';
   if (!empty($views_field_options['fieldset']['collapsible'])) {
     $classes_array[] = 'collapsible';
