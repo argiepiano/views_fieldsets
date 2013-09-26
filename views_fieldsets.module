@@ -6,13 +6,6 @@
  */
 
 /**
- * Implements hook_init().
- */
-function views_fieldsets_init() {
-
-}
-
-/**
  * Implements hook_theme().
  */
 function views_fieldsets_theme() {
@@ -142,7 +135,7 @@ function views_fieldsets_render__simple($fields, $vars) {
 }
 
 /**
- * Default theme function for views_fieldsets_fieldset.
+ * Default preprocessor for views_fieldsets_fieldset.
  */
 function template_preprocess_views_fieldsets_fieldset(&$vars) {
   $view = $vars['view'];
@@ -152,8 +145,9 @@ function template_preprocess_views_fieldsets_fieldset(&$vars) {
   $views_field = $vars['fields'][$fieldset_field];
   $views_field_options = $views_field->handler->options;
 
-  // HTML tag.
+  // HTML tags.
   $vars['tag'] = $views_field_options['fieldset']['type'];
+  $vars['legend_tag'] = $vars['tag'] == 'fieldset' ? 'legend' : '';
 
   // CSS classes.
   $classes = $views_field->handler->tokenize_value($views_field_options['fieldset']['classes'], $view->row_index);
@@ -177,6 +171,7 @@ function template_preprocess_views_fieldsets_fieldset(&$vars) {
   else {
     $vars['legend'] = $views_field->label;
   }
+  $vars['legend'] = t($vars['legend'], array(), array('context' => 'views_fieldsets'));
 
   // Attributes?
   $vars['attributes_array'] = array(
