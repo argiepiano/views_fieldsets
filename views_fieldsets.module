@@ -48,6 +48,17 @@ function views_fieldsets_preprocess_views_view_fields__2(&$vars) {
 
   $fieldsets = views_fieldsets_field_options_to_fieldsets_1d($fields);
   if ($fieldsets && array_filter($fieldsets)) {
+    // Fix separators.
+    $last_in_fieldset = FALSE;
+    foreach ($vars['fields'] as $id => $object) {
+      $in_fieldset = views_fieldsets_field_is_in_fieldset($id, $display_handler);
+      if (@$object->separator && !$in_fieldset && $last_in_fieldset) {
+        $object->separator = '';
+      }
+
+      $last_in_fieldset = $in_fieldset;
+    }
+
     // Add collapse.js for actual fieldsets.
     drupal_add_js('misc/collapse.js');
     drupal_add_js('misc/form.js');
@@ -255,6 +266,27 @@ function views_fieldsets_name_is_fieldset($field_name) {
 function views_fieldsets_field_is_fieldset($field_name, $display_handler) {
   $handler = $display_handler->get_handler('field', $field_name);
   return $handler instanceof views_fieldsets_fieldset_field_handler;
+}
+
+/**
+ * Helper to ...
+ *
+ * Establishes whether a field is IN a Views Fieldsets field.
+ */
+function views_fieldsets_field_is_in_fieldset($field_name, $display_handler) {
+  if (!@$display_handler->_fieldsets) {
+    $display_handler->_fieldsets = array_filter($display_handler->handlers['field'], function($handler) {
+      return $handler instanceof views_fieldsets_fieldset_field_handler;
+    });
+  }
+
+  foreach ($display_handler->_fieldsets as $fieldset) {
+    if (in_array($field_name, $fieldset->options['children'])) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
 }
 
 /**
