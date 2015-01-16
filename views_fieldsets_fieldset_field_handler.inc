@@ -85,8 +85,9 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
     );
 
     $fieldset_types = array(
-      'fieldset' => '<fieldset>',
+      'fieldset' => '<fieldset><legend>',
       'div' => '<div>',
+      'details' => '<details><summary>',
     );
     $form['fieldset']['type'] = array(
       '#type' => 'select',
