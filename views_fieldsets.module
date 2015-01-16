@@ -21,13 +21,6 @@ function views_fieldsets_theme() {
 }
 
 /**
- * Implements hook_form_alter().
- */
-function views_fieldsets_form_alter($form, $form_state, $form_id) {
-  //drupal_set_message($form_id);
-}
-
-/**
  * Implements template_preprocess_views_view_fields().
  *
  * Preprocessor for Views' row style template.
