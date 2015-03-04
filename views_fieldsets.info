@@ -6,5 +6,4 @@ package = Views
 
 dependencies[] = views
 
-files[] = views_fieldsets_display_extender.inc
-files[] = views_fieldsets_fieldset_field_handler.inc
+files[] = views/views_fieldsets_fieldset_field_handler.inc

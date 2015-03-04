@@ -16,6 +16,7 @@ function views_fieldsets_theme() {
     'views_fieldsets_fieldset' => array(
       'variables' => array('fieldset' => '', 'content' => ''),
       'template' => 'views-fieldsets-fieldset',
+      'path' => drupal_get_path('module', 'views_fieldsets') . '/templates',
     ),
   );
 }
@@ -194,8 +195,8 @@ function template_preprocess_views_fieldsets_fieldset(&$vars) {
 /**
  * Implements hook_form_FORM_ID_alter() for views_ui_edit_form().
  */
-function views_fieldsets_form_views_ui_edit_form_alter($form, $form_state, $form_id = 'views_ui_edit_form') {
-  drupal_add_css(drupal_get_path('module', 'views_fieldsets') . '/views_fieldsets.css');
+function views_fieldsets_form_views_ui_edit_form_alter($form, $form_state) {
+  drupal_add_css(drupal_get_path('module', 'views_fieldsets') . '/css/views_fieldsets.css');
 }
 
 /**
@@ -517,5 +518,6 @@ function theme_views_fieldsets_rearrange_form($variables) {
 function views_fieldsets_views_api() {
   return array(
     'version' => 3,
+    'path' => drupal_get_path('module', 'views_fieldsets') . '/includes',
   );
 }
