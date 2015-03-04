@@ -9,14 +9,25 @@
  * Implements hook_theme().
  */
 function views_fieldsets_theme() {
+  $path = drupal_get_path('module', 'views_fieldsets') . '/templates';
   return array(
     'views_fieldsets_rearrange_form' => array(
       'render element' => 'form',
     ),
     'views_fieldsets_fieldset' => array(
-      'variables' => array('fieldset' => '', 'content' => ''),
+      'variables' => array('fieldset_fields' => array(), 'legend' => ''),
       'template' => 'views-fieldsets-fieldset',
-      'path' => drupal_get_path('module', 'views_fieldsets') . '/templates',
+      'path' => $path,
+    ),
+    'views_fieldsets_div' => array(
+      'variables' => array('fieldset_fields' => array()),
+      'template' => 'views-fieldsets-div',
+      'path' => $path,
+    ),
+    'views_fieldsets_details' => array(
+      'variables' => array('fieldset_fields' => array(), 'legend' => ''),
+      'template' => 'views-fieldsets-details',
+      'path' => $path,
     ),
   );
 }
@@ -129,9 +140,9 @@ function views_fieldsets_render__simple($fields, $vars) {
 
   if ($content || !$hide_empty) {
     $vars['fieldset_fields'] = $content;
-    $vars['tag'] = $views_field_options['fieldset']['type'];
+    $html_tag = $views_field_options['fieldset']['type'];
     unset($vars['theme_hook_suggestion'], $vars['theme_hook_suggestions']);
-    $theme_hook_suggestions = views_theme_functions('views_fieldsets_fieldset__' . $vars['tag'], $vars['view'], $display_handler->display);
+    $theme_hook_suggestions = views_theme_functions('views_fieldsets_' . $html_tag, $vars['view'], $display_handler->display);
     $output = theme($theme_hook_suggestions, $vars);
     $output .= "\n";
   }
@@ -146,16 +157,33 @@ function views_fieldsets_render__simple($fields, $vars) {
  * Default preprocessor for views_fieldsets_fieldset.
  */
 function template_preprocess_views_fieldsets_fieldset(&$vars) {
+  _template_preprocess_views_fieldsets($vars);
+}
+
+/**
+ * Default preprocessor for views_fieldsets_div.
+ */
+function template_preprocess_views_fieldsets_div(&$vars) {
+  _template_preprocess_views_fieldsets($vars);
+}
+
+/**
+ * Default preprocessor for views_fieldsets_details.
+ */
+function template_preprocess_views_fieldsets_details(&$vars) {
+  _template_preprocess_views_fieldsets($vars);
+}
+
+/**
+ * Default preprocessor for all views_fieldsets_TYPE tpls.
+ */
+function _template_preprocess_views_fieldsets(&$vars) {
   $view = $vars['view'];
   $hierarchy = $vars['hierarchy'];
   $fieldset_field = $vars['fieldset_field'];
   $info_field = $hierarchy['fields'][$fieldset_field];
   $views_field = $vars['fields'][$fieldset_field];
   $views_field_options = $views_field->handler->options;
-
-  // HTML tags.
-  $vars['tag'] = $views_field_options['fieldset']['type'];
-  $vars['legend_tag'] = $vars['tag'] == 'fieldset' ? 'legend' : '';
 
   // CSS classes.
   $classes = $views_field->handler->tokenize_value($views_field_options['fieldset']['classes'], $view->row_index);
@@ -197,6 +225,22 @@ function template_preprocess_views_fieldsets_fieldset(&$vars) {
  */
 function views_fieldsets_form_views_ui_edit_form_alter($form, $form_state) {
   drupal_add_css(drupal_get_path('module', 'views_fieldsets') . '/css/views_fieldsets.css');
+}
+
+/**
+ * Implements hook_form_views_ui_edit_display_form_alter().
+ */
+function views_fieldsets_form_views_ui_edit_display_form_alter(&$form, &$form_state) {
+  $view = $form_state['view'];
+
+  $funcs = array();
+  foreach (array('fieldset', 'div', 'details') as $tag) {
+    $theme_hook_suggestions = views_theme_functions('views_fieldsets_' . $tag, $view, $view->display_handler->display);
+    $funcs[] = $view->display_handler->option_link(t('Views fieldsets @tag', array('@tag' => '<' . $tag . '>')), 'analyze-theme-fieldsets-' . $tag) . ': '  . $view->display_handler->format_themes($theme_hook_suggestions);
+  }
+  $html = theme('item_list', array('items' => $funcs));
+
+  $form['options']['analysis']['#markup'] .= $html;
 }
 
 /**
