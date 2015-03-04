@@ -129,6 +129,7 @@ function views_fieldsets_render__simple($fields, $vars) {
   if ($content || !$hide_empty) {
     $vars['fieldset_fields'] = $content;
     $vars['tag'] = $views_field_options['fieldset']['type'];
+    unset($vars['theme_hook_suggestion'], $vars['theme_hook_suggestions']);
     $theme_hook_suggestions = views_theme_functions('views_fieldsets_fieldset__' . $vars['tag'], $vars['view'], $display_handler->display);
     $output = theme($theme_hook_suggestions, $vars);
     $output .= "\n";
