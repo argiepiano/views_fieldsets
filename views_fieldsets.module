@@ -6,6 +6,14 @@
  */
 
 /**
+ * @todo
+ * - Use `attributes_array` only, no separate `classes_array`
+ * - Make display type pluggable
+ * - Clean up preprocessors
+ * - Update api.php, suggestion examples, hook examples etc
+ */
+
+/**
  * Implements hook_theme().
  */
 function views_fieldsets_theme() {
