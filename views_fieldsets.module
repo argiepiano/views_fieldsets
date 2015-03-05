@@ -241,14 +241,16 @@ function views_fieldsets_form_views_ui_edit_form_alter($form, $form_state) {
 function views_fieldsets_form_views_ui_edit_display_form_alter(&$form, &$form_state) {
   $view = $form_state['view'];
 
-  $funcs = array();
-  foreach (array('fieldset', 'div', 'details') as $tag) {
-    $theme_hook_suggestions = views_theme_functions('views_fieldsets_' . $tag, $view, $view->display_handler->display);
-    $funcs[] = $view->display_handler->option_link(t('Views fieldsets @tag', array('@tag' => '<' . $tag . '>')), 'analyze-theme-fieldsets-' . $tag) . ': '  . $view->display_handler->format_themes($theme_hook_suggestions);
-  }
-  $html = theme('item_list', array('items' => $funcs));
+  if ($form_state['section'] == 'analyze-theme') {
+    $funcs = array();
+    foreach (array('fieldset', 'div', 'details') as $tag) {
+      $theme_hook_suggestions = views_theme_functions('views_fieldsets_' . $tag, $view, $view->display_handler->display);
+      $funcs[] = $view->display_handler->option_link(t('Views fieldsets @tag', array('@tag' => '<' . $tag . '>')), 'analyze-theme-fieldsets-' . $tag) . ': '  . $view->display_handler->format_themes($theme_hook_suggestions);
+    }
+    $html = theme('item_list', array('items' => $funcs));
 
-  $form['options']['analysis']['#markup'] .= $html;
+    $form['options']['analysis']['#markup'] .= $html;
+  }
 }
 
 /**
