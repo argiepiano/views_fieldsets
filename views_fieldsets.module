@@ -19,25 +19,68 @@
 function views_fieldsets_theme() {
   $path = drupal_get_path('module', 'views_fieldsets') . '/templates';
   return array(
+    // Views edit form override.
     'views_fieldsets_rearrange_form' => array(
       'render element' => 'form',
     ),
+
+    // Fieldset types.
     'views_fieldsets_fieldset' => array(
+      'views_fieldsets_label' => '<fieldset><legend>',
       'variables' => array('fieldset_fields' => array(), 'legend' => ''),
       'template' => 'views-fieldsets-fieldset',
       'path' => $path,
     ),
     'views_fieldsets_div' => array(
+      'views_fieldsets_label' => '<div>',
       'variables' => array('fieldset_fields' => array()),
       'template' => 'views-fieldsets-div',
       'path' => $path,
     ),
     'views_fieldsets_details' => array(
+      'views_fieldsets_label' => '<details><summary>',
       'variables' => array('fieldset_fields' => array(), 'legend' => ''),
       'template' => 'views-fieldsets-details',
       'path' => $path,
     ),
   );
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function views_fieldsets_theme_registry_alter(&$registry) {
+  foreach ($registry as $hook => &$info) {
+    // Splice in our generic preprocessor for all fieldset types.
+    if (strpos($hook, 'views_fieldsets_') === 0 && isset($info['views_fieldsets_label'])) {
+      // It must come directly after 'template_preprocess', or first if that doesn't exist.
+      $index = array_search('template_preprocess', $info['preprocess functions']);
+      if ($index !== FALSE) {
+        array_splice($info['preprocess functions'], $index+1, 0, '_template_preprocess_views_fieldsets');
+      }
+      else {
+        array_unshift($info['preprocess functions'], '_template_preprocess_views_fieldsets');
+      }
+    }
+
+    unset($info);
+  }
+}
+
+/**
+ * Find all eligible fieldset theme hooks.
+ */
+function _views_fieldsets_types() {
+  $registry = theme_get_registry();
+
+  $types = array();
+  foreach ($registry as $hook => $info) {
+    if (strpos($hook, 'views_fieldsets_') === 0 && isset($info['views_fieldsets_label'])) {
+      $types[ substr($hook, 16) ] = $info['views_fieldsets_label'];
+    }
+  }
+
+  return $types;
 }
 
 /**
@@ -159,27 +202,6 @@ function views_fieldsets_render__simple($fields, $vars) {
   }
 
   return $output;
-}
-
-/**
- * Default preprocessor for views_fieldsets_fieldset.
- */
-function template_preprocess_views_fieldsets_fieldset(&$vars) {
-  _template_preprocess_views_fieldsets($vars);
-}
-
-/**
- * Default preprocessor for views_fieldsets_div.
- */
-function template_preprocess_views_fieldsets_div(&$vars) {
-  _template_preprocess_views_fieldsets($vars);
-}
-
-/**
- * Default preprocessor for views_fieldsets_details.
- */
-function template_preprocess_views_fieldsets_details(&$vars) {
-  _template_preprocess_views_fieldsets($vars);
 }
 
 /**

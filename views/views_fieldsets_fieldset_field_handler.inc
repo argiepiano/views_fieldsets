@@ -84,11 +84,7 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
       '#tree' => TRUE,
     );
 
-    $fieldset_types = array(
-      'fieldset' => '<fieldset><legend>',
-      'div' => '<div>',
-      'details' => '<details><summary>',
-    );
+    $fieldset_types = _views_fieldsets_types();
     $form['fieldset']['type'] = array(
       '#type' => 'select',
       '#title' => t('Display type'),

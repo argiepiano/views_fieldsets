@@ -3,11 +3,6 @@
 /**
  * @file
  * All Views hooks except hook_views_api.
- *
- * * Adds a Fieldset field to the Global 'category'.
- * * Registers a Display Extender (plugin) for misc options.
- *
- * @see views_fieldsets_display_extender
  */
 
 /**
