@@ -189,7 +189,15 @@ function views_fieldsets_render__simple($fields, $vars) {
     }
   }
 
-  if ($content || !$hide_empty) {
+  $is_empty = TRUE;
+  foreach ($content as $field) {
+    if (!$field->is_fieldset || !empty($field->content)) {
+      $is_empty = FALSE;
+      break;
+    }
+  }
+
+  if (!$is_empty || !$hide_empty) {
     $vars['fieldset_fields'] = $content;
     $html_tag = $views_field_options['fieldset']['type'];
     unset($vars['theme_hook_suggestion'], $vars['theme_hook_suggestions']);
