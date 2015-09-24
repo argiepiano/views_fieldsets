@@ -306,16 +306,18 @@ function views_fieldsets_field_options_to_fieldsets_1d($fields) {
  * Implements hook_views_ui_display_tab_alter().
  */
 function views_fieldsets_views_ui_display_tab_alter(&$build, $view, $display_id) {
-  $fields = $view->display_handler->get_option('fields');
+  $display_handler = &$view->display[$display_id]->handler;
+
+  $fields = $display_handler->get_option('fields');
 
   $fieldsets = views_fieldsets_field_options_to_fieldsets_1d($fields);
 
-  $hierarchy = views_fieldsets_hierarchy_info($view->display_handler, $fieldsets);
+  $hierarchy = views_fieldsets_hierarchy_info($display_handler, $fieldsets);
 
   foreach (element_children($build['details']['columns']['first']['fields']['fields']) as $field_name) {
     $field = &$build['details']['columns']['first']['fields']['fields'][$field_name];
 
-    $field_is_fieldset = views_fieldsets_field_is_fieldset($field_name, $view->display_handler);
+    $field_is_fieldset = views_fieldsets_field_is_fieldset($field_name, $display_handler);
     if ($field_is_fieldset) {
       $field['#class'][] = 'views-fieldset';
     }
