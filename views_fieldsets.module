@@ -165,7 +165,9 @@ function views_fieldsets_preprocess_views_view_table(&$vars) {
           }
           else {
             // Render single field.
-            $new_row[$field_name] = $row[$field_name];
+            if (isset($row[$field_name])) {
+              $new_row[$field_name] = $row[$field_name];
+            }
           }
         }
       }
