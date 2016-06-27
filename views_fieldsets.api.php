@@ -25,10 +25,50 @@ function test_theme() {
 }
 
 /**
+ * Implements hook_views_fieldsets_views_field_options_alter().
+ *
+ * @see views_fieldsets_fieldset_field_handler::option_definition()
+ */
+function hook_views_fieldsets_views_field_options_alter(&$options, $handler) {
+  $options['link']['contains']['path'] = array('default' => '');
+  $options['link']['contains']['absolute'] = array('default' => 0);
+}
+
+/**
+ * Implements hook_views_fieldsets_views_field_form_alter().
+ *
+ * @see views_fieldsets_fieldset_field_handler::options_form()
+ */
+function hook_views_fieldsets_views_field_form_alter(&$form, $handler) {
+  $form['link'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Link options'),
+    '#description' => t('To wrap the entire fieldset content with a link, enter a path.'),
+  );
+  $form['link']['path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Path'),
+    '#default_value' => $handler->options['fieldset']['link']['path'],
+  );
+  $form['link']['absolute'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Absolute'),
+    '#default_value' => $handler->options['fieldset']['link']['absolute'],
+  );
+}
+
+/**
  * Default preprocessor for views_fieldsets_simple.
  */
 function template_preprocess_views_fieldsets_simple(&$variables) {
+  // Much better legend:
   $variables['legend'] = 'OVERRIDE YO!';
+
+  // Wrap the whole thing with a link:
+  $handler = $vars['fields'][ $vars['fieldset_field'] ]->handler;
+  $path = $handler->options['fieldset']['link']['path'];
+  $path = $handler->tokenize_value($path, $vars['view']->row_index);
+  $vars['href'] = url($path); //  Use $href in the custom tpl or theme function.
 }
 
 /**
@@ -41,7 +81,7 @@ function theme_views_fieldsets_simple($variables) {
 
   $html  = '<fieldset>';
   $html .= '<legend>' . check_plain(strip_tags($variables['legend'])) . '</legend>';
-  $html .= check_plain(strip_tags($content));
+  $html .= check_plain(strip_tags($content)); // Wrap this in $href maybe?
   $html .= '</fieldset>';
 
   return $html;

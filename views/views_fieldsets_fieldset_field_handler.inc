@@ -27,6 +27,8 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
     $options['fieldset']['contains']['collapsible'] = array('default' => 0);
     $options['fieldset']['contains']['collapsed'] = array('default' => 0);
 
+    drupal_alter('views_fieldsets_views_field_options', $options['fieldset']['contains'], $this);
+
     return $options;
   }
 
@@ -118,6 +120,8 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
       '#title' => t('Collapsed'),
       '#default_value' => $this->options['fieldset']['collapsed'],
     );
+
+    drupal_alter('views_fieldsets_views_field_form', $form['fieldset'], $this);
   }
 
   /**
