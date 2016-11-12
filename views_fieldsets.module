@@ -145,9 +145,9 @@ function views_fieldsets_preprocess_views_view_table(&$vars) {
             // Fake sub/child/content fields.
             $content = array();
             foreach ($info_field->children as $child_field_name => $child_info) {
-              $views_field = $vars['field_fields'][$index][$child_field_name];
-
-              $content[$child_field_name] = $views_field;
+              if ($views_field = @$vars['field_fields'][$index][$child_field_name]) {
+                $content[$child_field_name] = $views_field;
+              }
             }
 
             // Fake vars and render fieldsets.
