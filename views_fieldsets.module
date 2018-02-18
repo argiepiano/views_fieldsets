@@ -122,32 +122,19 @@ function views_fieldsets_preprocess_views_view_table(&$vars) {
         if (isset($vars['fields'][$field_name])) {
           if (views_fieldsets_field_is_fieldset($field_name, $display_handler)) {
             $sub_vars = $vars;
-            // Fake fieldset field.
-            $fieldset_field_handler = $view->display_handler->handlers['field'][$field_name];
+
+            // Fake vars.
             $sub_vars['fields'][$field_name] = (object) array(
-              'handler' => $fieldset_field_handler,
-              'label' => $fieldset_field_handler->options['label'],
+              'handler' => $view->display_handler->handlers['field'][$field_name],
+              'label' => $view->display_handler->handlers['field'][$field_name]->options['label'],
             );
-            // Fake sub/child/content fields.
-            $content = array();
-            foreach ($info_field->children as $child_field_name => $child_info) {
-              if ($views_field = $vars['field_fields'][$index][$child_field_name]) {
-                if (!empty($views_field)) {
-                  $content[$child_field_name] = $views_field;
-                }
-              }
-            }
-            // Fake vars and render fieldsets.
             $sub_vars['fieldset_field'] = $field_name;
-            $sub_vars['fieldset_fields'] = $content;
-            $views_field = $vars['view']->field[$field_name];
-            $views_field_options = $views_field->options;
-            $html_tag = $views_field_options['fieldset']['type'];
-            unset($sub_vars['theme_hook_suggestion'], $sub_vars['theme_hook_suggestions']);
-            $theme_hook_suggestions = views_theme_functions('views_fieldsets_' . $html_tag, $sub_vars['view'], $display_handler->display);
-            $output = theme($theme_hook_suggestions, $sub_vars);
-            $output .= "\n";
-            $new_row[$field_name] = $output;
+
+            // Saving current row index.
+            $sub_vars['row_index'] = $index;
+
+            // Recursive render of fieldsets.
+            $new_row[$field_name] = _views_fieldsets_render__table($info_field, $sub_vars);
           }
           else {
             // Render single field.
@@ -161,6 +148,66 @@ function views_fieldsets_preprocess_views_view_table(&$vars) {
       $vars['rows'][$index] = $new_row;
     }
   }
+}
+
+/**
+ * Helper function to render fieldsets recursively for table row style.
+ */
+function _views_fieldsets_render__table($fields, $vars) {
+  // Set default values.
+  $view = $vars['view'];
+  $display_handler = $view->display_handler;
+  $views_field = $view->field[$vars['fieldset_field']];
+  $views_field_options = $views_field->options;
+  $hide_empty = !empty($display_handler->default_display->options['style_options']['info'][$vars['fieldset_field']]['empty_column']);
+  $content = array();
+
+  foreach ($fields->children as $child_field_name => $child_info) {
+    if ($views_field = $vars['field_fields'][$vars['row_index']][$child_field_name]) {
+      if (views_fieldsets_field_is_fieldset($child_field_name, $display_handler)) {
+        $sub_vars = $vars;
+
+        // Fake vars.
+        $sub_vars['fields'][$child_field_name] = (object) array(
+          'handler' => $view->display_handler->handlers['field'][$child_field_name],
+          'label' => $view->display_handler->handlers['field'][$child_field_name]->options['label'],
+        );
+
+        $sub_vars['fieldset_field'] = $child_field_name;
+        $content[$child_field_name] = $views_field;
+        $content[$child_field_name]->content = _views_fieldsets_render__table($child_info, $sub_vars);
+        $views_field->label_html = $views_field->wrapper_prefix = $views_field->wrapper_suffix = '';
+      }
+      else {
+
+        // Default behaviour to render field.
+        $content[$child_field_name] = $views_field;
+      }
+    }
+  }
+
+  // Checking if we need to hide fieldset.
+  $is_empty = TRUE;
+  foreach ($content as $field) {
+    if (!empty($field->content)) {
+      $is_empty = FALSE;
+      break;
+    }
+  }
+
+  if (!$is_empty || !$hide_empty) {
+    $vars['fieldset_fields'] = $content;
+    $html_tag = $views_field_options['fieldset']['type'];
+    unset($vars['theme_hook_suggestion'], $vars['theme_hook_suggestions']);
+    $theme_hook_suggestions = views_theme_functions('views_fieldsets_' . $html_tag, $vars['view'], $display_handler->display);
+    $output = theme($theme_hook_suggestions, $vars);
+    $output .= "\n";
+  }
+  else {
+    $output = '';
+  }
+
+  return $output;
 }
 
 /**
