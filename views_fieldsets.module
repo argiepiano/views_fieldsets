@@ -163,7 +163,8 @@ function _views_fieldsets_render__table($fields, $vars) {
   $content = array();
 
   foreach ($fields->children as $child_field_name => $child_info) {
-    if ($views_field = $vars['field_fields'][$vars['row_index']][$child_field_name]) {
+    if (!empty($vars['field_fields'][$vars['row_index']][$child_field_name])) {
+      $views_field = $vars['field_fields'][$vars['row_index']][$child_field_name];
       if (views_fieldsets_field_is_fieldset($child_field_name, $display_handler)) {
         $sub_vars = $vars;
 
