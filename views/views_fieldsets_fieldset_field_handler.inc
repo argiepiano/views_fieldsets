@@ -9,32 +9,38 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
 
   function query() {
     // Do nothing -- to override the parent query.
+
   }
 
   function option_definition() {
     $options = parent::option_definition();
     $options['element_default_classes']['default'] = FALSE;
     // Add the hierarchical fieldset structure storage.
+
     $options['children'] = array('default' => array());
     // Add (cosmetic) user options.
+
     $options['fieldset']['contains'] = array();
     $options['fieldset']['contains']['type'] = array('default' => 'fieldset');
     $options['fieldset']['contains']['classes'] = array('default' => '');
     $options['fieldset']['contains']['id'] = array('default' => '');
     $options['fieldset']['contains']['collapsible'] = array('default' => 0);
     $options['fieldset']['contains']['collapsed'] = array('default' => 0);
-    drupal_alter('views_fieldsets_views_field_options', $options['fieldset']['contains'], $this);
+    backdrop_alter('views_fieldsets_views_field_options', $options['fieldset']['contains'], $this);
     return $options;
   }
 
-  function options_form(&$form, &$form_state) {
+  function options_form($form, $form_state) {
     // These options are required by Views.
+
     $keep_form_elements = element_children($form);
     // These options are useful for a fieldset.
+
     $keep_form_elements[] = 'custom_label';
     $keep_form_elements[] = 'label';
     $keep_form_elements[] = 'alter';
     // These options are useful 'alter' options. Most aren't.
+
     $keep_rewrite_elements = array(
       'alter_text',
       'text',
@@ -43,36 +49,44 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
       'nl2br',
     );
     // Get the plentiful usual suspects.
+
     parent::options_form($form, $form_state);
     // Remove options that aren't relevant.
+
     foreach (element_children($form) as $name) {
       if (!in_array($name, $keep_form_elements)) {
         $form[$name]['#access'] = FALSE;
       }
     }
     // Alter custom_label (always ON).
-    $element = &$form['custom_label'];
+
+    $element = $form['custom_label'];
     $element['#default_value'] = $element['#value'] = TRUE;
     $element['#type'] = 'hidden';
     // Alter label to make it fit our needs.
-    $element = &$form['label'];
+
+    $element = $form['label'];
     unset($element['#dependency']);
     $element['#title'] = t('Fieldset title');
     $element['#required'] = TRUE;
     $element['#description'] = t('The back-end admin label and default front-end fieldset legend/details summary. You can override it by rewriting below. Will be translated either way.');
     // Open 'alter' fieldset.
+
     $form['alter']['#collapsed'] = $form['alter']['#collapsible'] = FALSE;
     $form['alter']['#description'] = t('This will alter the fieldset <code>&lt;legend&gt;</code> or details <code>&lt;summary&gt;</code>. Default would be the above <em>Fieldset title</em>.');
     // Hide most 'alter' stuff.
+
     foreach (element_children($form['alter']) as $name) {
       if (!in_array($name, $keep_rewrite_elements)) {
         $form['alter'][$name]['#access'] = FALSE;
       }
     }
     // Don't hide 'hide_empty', because it's useful for empty fieldsets (due to empty fields).
+
     unset($form['hide_empty']['#access'], $form['hide_empty']['#fieldset']);
     $form['hide_empty']['#weight'] = 200;
     // Add 'fieldset' tree with the usual fieldset stuff.
+
     $form['fieldset'] = array(
       '#tree' => TRUE,
     );
@@ -106,7 +120,7 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
       '#title' => t('Collapsed'),
       '#default_value' => $this->options['fieldset']['collapsed'],
     );
-    drupal_alter('views_fieldsets_views_field_form', $form['fieldset'], $this);
+    backdrop_alter('views_fieldsets_views_field_form', $form['fieldset'], $this);
   }
 
   /**

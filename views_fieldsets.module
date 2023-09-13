@@ -17,7 +17,7 @@
  * Implements hook_theme().
  */
 function views_fieldsets_theme() {
-  $path = drupal_get_path('module', 'views_fieldsets') . '/templates';
+  $path = backdrop_get_path('module', 'views_fieldsets') . '/templates';
   return array(
     // Views edit form override.
     'views_fieldsets_rearrange_form' => array(
@@ -49,7 +49,7 @@ function views_fieldsets_theme() {
  * Implements hook_theme_registry_alter().
  */
 function views_fieldsets_theme_registry_alter(&$registry) {
-  foreach ($registry as $hook => &$info) {
+  foreach ($registry as $hook => $info) {
     // Splice in our generic preprocessor for all fieldset types.
     if (strpos($hook, 'views_fieldsets_') === 0 && isset($info['views_fieldsets_label'])) {
       // It must come directly after 'template_preprocess', or first if that doesn't exist.
@@ -106,11 +106,13 @@ function views_fieldsets_preprocess_views_view_table(&$vars) {
       }
       $last_in_fieldset = $in_fieldset;
     }
+
     // Add collapse.js for actual fieldsets.
-    drupal_add_js('misc/collapse.js');
-    drupal_add_js('misc/form.js');
+    backdrop_add_js('core/misc/collapse.js');
+    backdrop_add_js('core/misc/form.js');
     $hierarchy = views_fieldsets_hierarchy_info($display_handler, $fieldsets);
     $vars['hierarchy'] = $hierarchy;
+
     // Remove fieldsetted fields' header.
     foreach (array_filter($fieldsets) as $field_name => $fieldset_name) {
       unset($vars['header'][$field_name]);
@@ -232,8 +234,8 @@ function views_fieldsets_preprocess_views_view_fields(&$vars) {
       $last_in_fieldset = $in_fieldset;
     }
     // Add collapse.js for actual fieldsets.
-    drupal_add_js('misc/collapse.js');
-    drupal_add_js('misc/form.js');
+    backdrop_add_js('misc/collapse.js');
+    backdrop_add_js('misc/form.js');
     $hierarchy = views_fieldsets_hierarchy_info($display_handler, $fieldsets);
     $vars['hierarchy'] = $hierarchy;
     $new_fields = array();
@@ -327,7 +329,7 @@ function _template_preprocess_views_fieldsets(&$vars) {
   $classes = $views_field->handler->tokenize_value($views_field_options['fieldset']['classes'], $view->row_index);
   $classes_array = array_filter(explode(' ', $classes));
   if (!$classes_array) {
-    $classes_array[] = drupal_strtolower(drupal_clean_css_identifier($views_field->label));
+    $classes_array[] = backdrop_strtolower(backdrop_clean_css_identifier($views_field->label));
   }
   $classes_array[] = 'views-fieldset';
   if (!empty($views_field_options['fieldset']['collapsible'])) {
@@ -352,15 +354,15 @@ function _template_preprocess_views_fieldsets(&$vars) {
   if (!empty($views_field_options['fieldset']['id'])) {
     $id = $views_field_options['fieldset']['id'];
     $id = $views_field->handler->tokenize_value($id, $view->row_index);
-    $vars['attributes_array']['id'] = drupal_html_id($id);
+    $vars['attributes_array']['id'] = backdrop_html_id($id);
   }
 }
 
 /**
- * Implements hook_form_FORM_ID_alter() for views_ui_edit_form().
+ * Implements hook_form_BASE_FORM_ID_alter() for views_ui_edit_form().
  */
-function views_fieldsets_form_views_ui_edit_form_alter($form, $form_state) {
-  drupal_add_css(drupal_get_path('module', 'views_fieldsets') . '/css/views_fieldsets.css');
+function views_fieldsets_form_views_ui_edit_form_alter(&$form, &$form_state) {
+  backdrop_add_css(backdrop_get_path('module', 'views_fieldsets') . '/css/views_fieldsets.css');
 }
 
 /**
@@ -386,7 +388,7 @@ function views_fieldsets_form_views_ui_edit_display_form_alter(&$form, &$form_st
  */
 function views_fieldsets_field_options_to_fieldsets_1d($fields) {
   // Create empty 1D array with `field` => `parent`.
-  $fieldsets = $fields ? array_combine(array_keys($fields), array_fill(0, count($fields), '')) : array();
+  $fieldsets = $fields?array_combine(array_keys($fields), array_fill(0, count($fields), '')) : array();
   // Fill `parent` values by iterating through all fields (only the Views Fieldset fields matter).
   foreach ($fields as $field_name => $field) {
     if (isset($field['children'])) {
@@ -402,12 +404,12 @@ function views_fieldsets_field_options_to_fieldsets_1d($fields) {
  * Implements hook_views_ui_display_tab_alter().
  */
 function views_fieldsets_views_ui_display_tab_alter(&$build, $view, $display_id) {
-  $display_handler = &$view->display[$display_id]->handler;
+  $display_handler = $view->display[$display_id]->handler;
   $fields = $display_handler->get_option('fields');
   $fieldsets = views_fieldsets_field_options_to_fieldsets_1d($fields);
   $hierarchy = views_fieldsets_hierarchy_info($display_handler, $fieldsets);
   foreach (element_children($build['details']['columns']['first']['fields']['fields']) as $field_name) {
-    $field = &$build['details']['columns']['first']['fields']['fields'][$field_name];
+    $field = $build['details']['columns']['first']['fields']['fields'][$field_name];
     $field_is_fieldset = views_fieldsets_field_is_fieldset($field_name, $display_handler);
     if ($field_is_fieldset) {
       $field['#class'][] = 'views-fieldset';
@@ -447,12 +449,12 @@ function views_fieldsets_field_is_fieldset($field_name, $display_handler) {
  */
 function views_fieldsets_field_is_in_fieldset($field_name, $display_handler) {
   if (empty($display_handler->_fieldsets)) {
-    $display_handler->_fieldsets = array_filter($display_handler->handlers['field'], function ($handler) {
-      return $handler instanceof views_fieldsets_fieldset_field_handler;
-    });
+    $display_handler->_fieldsets = array_filter($display_handler->handlers['field'], ($handler)[
+      $handler instanceof views_fieldsets_fieldset_field_handler
+    ]);
   }
   foreach ($display_handler->_fieldsets as $fieldset) {
-    if (in_array($field_name, $fieldset->options['children'])) {
+    if (!empty($fieldset->options['children']) && in_array($field_name, $fieldset->options['children'])) {
       return TRUE;
     }
   }
@@ -462,7 +464,7 @@ function views_fieldsets_field_is_in_fieldset($field_name, $display_handler) {
 /**
  * Helper to ...
  */
-function views_fieldsets_hierarchy_total_weights_set(&$hierarchy, &$fields, &$weight) {
+function views_fieldsets_hierarchy_total_weights_set(&$hierarchy, &$fields, $weight) {
   foreach ($hierarchy as $field_name => $field) {
     $field->info->total_weight = $weight++;
     $fields[$field_name] = $field;
@@ -516,7 +518,7 @@ function views_fieldsets_hierarchy_info($display_handler, $fieldsets, $get_paren
 }
 
 /**
- * Implements hook_form_FORM_ID_alter() for views_ui_rearrange_form().
+ * Implements hook_form_BASE_FORM_ID_alter() for views_ui_rearrange_form().
  */
 function views_fieldsets_form_views_ui_rearrange_form_alter(&$form, &$form_state, $form_id = 'views_ui_rearrange_form') {
   $actions = array_filter(explode('/', $form['#action']));
@@ -558,19 +560,19 @@ function views_fieldsets_form_views_ui_rearrange_form_alter(&$form, &$form_state
   // To be used in the theme function (for views_fieldsets_field_is_fieldset()).
   $form['#display_handler'] = $display_handler;
 
-  array_unshift($form['buttons']['submit']['#submit'], 'views_fieldsets_rearrange_form_submit');
+  array_unshift($form['actions']['submit']['#submit'], 'views_fieldsets_rearrange_form_submit');
 }
 
 /**
  * Submit handler for views_ui_rearrange_form().
  */
-function views_fieldsets_rearrange_form_submit($form, &$form_state) {
-  $values = &$form_state['values'];
+function views_fieldsets_rearrange_form_submit(&$form, &$form_state) {
+  $values = $form_state['values'];
   $view = $form_state['view'];
   $display_handler = $view->display_handler;
   $fields = $display_handler->get_option('fields');
   // Sort input by (hierarchical) weight.
-  uasort($values, 'drupal_sort_weight');
+  backdrop_sort($values, array('weight' => SORT_NUMERIC));
   // Create simple hierarchy (field => parent) from sorted input.
   $fieldsets = array();
   foreach ($values as $field_name => $stuff) {
@@ -590,7 +592,7 @@ function views_fieldsets_rearrange_form_submit($form, &$form_state) {
     // $hierarchy[$field_name] = $fields[$field_name]['views_fieldsets_parent'] = $field->info->parent;
     // And create hierarchy per Views Fieldset field.
     if (views_fieldsets_field_is_fieldset($field_name, $display_handler)) {
-      $fields[$field_name]['children'] = !empty($field->children) ? array_keys($field->children) : array();
+      $fields[$field_name]['children'] = !empty($field->children)?array_keys($field->children) : array();
     }
   }
   $display_handler->set_option('fields', $fields);
@@ -599,7 +601,7 @@ function views_fieldsets_rearrange_form_submit($form, &$form_state) {
 /**
  * Theme function for views_fieldsets_rearrange_form.
  */
-function theme_views_fieldsets_rearrange_form($variables) {
+function theme_views_fieldsets_rearrange_form(&$variables) {
   $form = $variables['form'];
   $display_handler = $form['#display_handler'];
   $rows = array();
@@ -607,29 +609,29 @@ function theme_views_fieldsets_rearrange_form($variables) {
     if (isset($form['fields'][$id]['name'])) {
       $field_name = $form['fields'][$id]['field_name']['#value'];
       $depth = $form['fields'][$id]['depth']['#default_value'];
-      $indentation = $depth > 0 ? theme('indentation', array('size' => $depth)) : '';
+      $indentation = $depth > 0?theme('indentation', array('size' => $depth)) : '';
       $row = array();
       $row[] =
         $indentation .
-        drupal_render($form['fields'][$id]['name']) .
-        drupal_render($form['fields'][$id]['hierarchy']) .
-        drupal_render($form['fields'][$id]['depth']) .
-        drupal_render($form['fields'][$id]['field_name']);
+        backdrop_render($form['fields'][$id]['name']) .
+        backdrop_render($form['fields'][$id]['hierarchy']) .
+        backdrop_render($form['fields'][$id]['depth']) .
+        backdrop_render($form['fields'][$id]['field_name']);
       $form['fields'][$id]['weight']['#attributes']['class'] = array('weight');
-      $row[] = drupal_render($form['fields'][$id]['weight']);
-      $row[] = drupal_render($form['fields'][$id]['removed']) . l('<span>' . t('Remove') . '</span>', 'javascript:void()', array(
-          'attributes' => array(
-            'id' => 'views-remove-link-' . $id,
-            'class' => array(
-              'views-hidden',
-              'views-button-remove',
-              'views-remove-link',
-            ),
-            'alt' => t('Remove this item'),
-            'title' => t('Remove this item'),
+      $row[] = backdrop_render($form['fields'][$id]['weight']);
+      $row[] = backdrop_render($form['fields'][$id]['removed']) . l('<span>' . t('Remove') . '</span>', 'javascript:void()', array(
+        'attributes' => array(
+          'id' => 'views-remove-link-' . $id,
+          'class' => array(
+            'views-hidden',
+            'views-button-remove',
+            'views-remove-link',
           ),
-          'html' => TRUE,
-        ));
+          'alt' => t('Remove this item'),
+          'title' => t('Remove this item'),
+        ),
+        'html' => TRUE,
+      ));
       $classes = array('draggable');
       if (!views_fieldsets_field_is_fieldset($field_name, $display_handler)) {
         $classes[] = 'tabledrag-leaf';
@@ -650,7 +652,7 @@ function theme_views_fieldsets_rearrange_form($variables) {
     );
   }
   $header = array('', t('Weight'), t('Remove'));
-  $output = drupal_render($form['override']);
+  $output = backdrop_render($form['override']);
   $output .= '<div class="scroll">';
   $output .= theme('table', array(
     'header' => $header,
@@ -658,10 +660,10 @@ function theme_views_fieldsets_rearrange_form($variables) {
     'attributes' => array('id' => 'arrange'),
   ));
   $output .= '</div>';
-  $output .= drupal_render_children($form);
-  drupal_add_tabledrag('arrange', 'match', 'parent', 'hierarchy', 'hierarchy', 'field-name', FALSE);
-  drupal_add_tabledrag('arrange', 'depth', 'group', 'depth', NULL, NULL, FALSE);
-  drupal_add_tabledrag('arrange', 'order', 'sibling', 'weight');
+  $output .= backdrop_render_children($form);
+  backdrop_add_tabledrag('arrange', 'match', 'parent', 'hierarchy', 'hierarchy', 'field-name', FALSE);
+  backdrop_add_tabledrag('arrange', 'depth', 'group', 'depth', NULL, NULL, FALSE);
+  backdrop_add_tabledrag('arrange', 'order', 'sibling', 'weight');
   return $output;
 }
 
@@ -670,7 +672,16 @@ function theme_views_fieldsets_rearrange_form($variables) {
  */
 function views_fieldsets_views_api() {
   return array(
-    'version' => 3,
-    'path' => drupal_get_path('module', 'views_fieldsets') . '/includes',
+    'api' => 3,
+    'path' => backdrop_get_path('module', 'views_fieldsets') . '/includes',
+  );
+}
+
+/**
+ * Implements hook_autoload_info().
+ */
+function views_fieldsets_autoload_info() {
+  return array(
+    'views_fieldsets_fieldset_field_handler' => 'views/views_fieldsets_fieldset_field_handler.inc',
   );
 }

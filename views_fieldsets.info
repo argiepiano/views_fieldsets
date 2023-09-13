@@ -1,8 +1,7 @@
 name = Views fieldsets
 description = Output several Views fields into a fieldset.
-core = 7.x
+backdrop = 1.x
+type = module
 package = Views
 
 dependencies[] = views
-
-files[] = views/views_fieldsets_fieldset_field_handler.inc

@@ -1,4 +1,4 @@
-<fieldset class="<?php print $classes; ?>"<?php print $attributes; ?>>
+<fieldset class="<?php print implode(' ', $classes); ?>"<?php print $attributes; ?>>
   <legend>
     <span class="fieldset-legend"><?php print $legend; ?></span>
   </legend>
