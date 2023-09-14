@@ -30,7 +30,7 @@ class views_fieldsets_fieldset_field_handler extends views_handler_field {
     return $options;
   }
 
-  function options_form($form, $form_state) {
+  function options_form(&$form, &$form_state) {
     // These options are required by Views.
 
     $keep_form_elements = element_children($form);
