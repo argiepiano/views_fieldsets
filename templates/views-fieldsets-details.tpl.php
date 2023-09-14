@@ -1,4 +1,4 @@
-<details class="<?php print implode(' ', $classes); ?>"<?php print $attributes; ?>>
+<details class="<?php print implode(' ', $classes); ?>"<?php print backdrop_attributes($attributes); ?>>
   <?php if ($legend): ?>
     <summary><?php print $legend; ?></summary>
   <?php endif; ?>
