@@ -448,10 +448,12 @@ function views_fieldsets_field_is_fieldset($field_name, $display_handler) {
  * Establishes whether a field is IN a Views Fieldsets field.
  */
 function views_fieldsets_field_is_in_fieldset($field_name, $display_handler) {
-  if (empty($display_handler->_fieldsets)) {
-    $display_handler->_fieldsets = array_filter($display_handler->handlers['field'], ($handler)[
-      $handler instanceof views_fieldsets_fieldset_field_handler
-    ]);
+  if (empty($display_handler->_fieldsets) && !empty($display_handler->handlers['field'])) {
+    foreach ($display_handler->handlers['field'] as $handler) {
+      if ($handler instanceof views_fieldsets_fieldset_field_handler) {
+        $display_handler->_fieldsets[] = $handler;
+      }
+    }
   }
   foreach ($display_handler->_fieldsets as $fieldset) {
     if (!empty($fieldset->options['children']) && in_array($field_name, $fieldset->options['children'])) {
