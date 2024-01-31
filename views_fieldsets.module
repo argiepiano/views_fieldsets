@@ -7,7 +7,7 @@
 
 /**
  * @todo
- * - Use `attributes_array` only, no separate `classes_array`
+ * - Use `attributes_array` only, no separate `classes`
  * - Make display type pluggable
  * - Clean up preprocessors
  * - Update api.php, suggestion examples, hook examples etc
@@ -234,8 +234,8 @@ function views_fieldsets_preprocess_views_view_fields(&$vars) {
       $last_in_fieldset = $in_fieldset;
     }
     // Add collapse.js for actual fieldsets.
-    backdrop_add_js('misc/collapse.js');
-    backdrop_add_js('misc/form.js');
+    backdrop_add_js('core/misc/collapse.js');
+    backdrop_add_js('core/misc/form.js');
     $hierarchy = views_fieldsets_hierarchy_info($display_handler, $fieldsets);
     $vars['hierarchy'] = $hierarchy;
     $new_fields = array();
@@ -326,19 +326,19 @@ function _template_preprocess_views_fieldsets(&$vars) {
   $views_field = $vars['fields'][$fieldset_field];
   $views_field_options = $views_field->handler->options;
   // CSS classes.
-  $classes = $views_field->handler->tokenize_value($views_field_options['fieldset']['classes'], $view->row_index);
-  $classes_array = array_filter(explode(' ', $classes));
-  if (!$classes_array) {
-    $classes_array[] = backdrop_strtolower(backdrop_clean_css_identifier($views_field->label));
+  $classes_string = $views_field->handler->tokenize_value($views_field_options['fieldset']['classes'], $view->row_index);
+  $classes = array_filter(explode(' ', $classes_string));
+  if (!$classes) {
+    $classes[] = backdrop_strtolower(backdrop_clean_css_identifier($views_field->label));
   }
-  $classes_array[] = 'views-fieldset';
+  $classes[] = 'views-fieldset';
   if (!empty($views_field_options['fieldset']['collapsible'])) {
-    $classes_array[] = 'collapsible';
+    $classes[] = 'collapsible';
   }
   if (!empty($views_field_options['fieldset']['collapsed'])) {
-    $classes_array[] = 'collapsed';
+    $classes[] = 'collapsed';
   }
-  $vars['classes_array'] = $classes_array;
+  $vars['classes'] = $classes;
   // Fieldset legend.
   if (!empty($views_field_options['alter']['alter_text']) && !empty($views_field_options['alter']['text'])) {
     $vars['legend'] = $views_field->content;
